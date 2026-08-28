@@ -31,7 +31,8 @@ class BaseBot (object):
                   )
         return result
 
-    
+
+    # This is only called once moauth has create the secret file. 
     def createMastodon(self, timeout):
         context = self.context
         fileName =  ("/app/data/oauth/" +

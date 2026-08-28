@@ -1,9 +1,13 @@
+import os
+import logging
+import uuid
 from pathlib import Path
 
 from mastodon import Mastodon
 
 from requests.models import urlencode
 
+from cromlech.browser import getSession
 from cromlech.browser.exceptions import HTTPFound
 
 from zopache.core.viewdecorators import *
@@ -11,11 +15,13 @@ from zopache.core.baseform import Form
 from zopache.ttw.interfaces import IPrincipalFolder
 from zopache.remote.mastodon.basebot import MastodonBot, TIMEOUT
 
+logger = logging.getLogger("oauth")
+
 @form_component
 @context(IPrincipalFolder)
 @target(IView)
 @name("moauth")
-class MastodonOauth(Form,MastodonBot):
+class MastodonOauth(Form, MastodonBot):
     title = "Authenticate with Mastodon.Social"
     subTitle = """Should you see this, it means their server is overloaded,
     plese try logging in again.. """
@@ -39,6 +45,9 @@ class MastodonOauth(Form,MastodonBot):
 
         params['redirect_uri'] = self.callbackURL()
         params['scope'] = ["read:user", "read:email"]
+        oauthState = uuid.uuid4().hex
+        getSession()['oauthState'] = oauthState
+        params['state'] = oauthState
 
         endPoint = "https://github.com/login/oauth/authorize?"
         url = endPoint + urlencode(params)
@@ -46,45 +55,56 @@ class MastodonOauth(Form,MastodonBot):
 
     
     def mastodonOauth(self):
-        mastodonDomain = self.getOauthServer()
-        wikiDomain = self.getDomain().lower()        
-        appDirectory = Path("/app/data/oauth") / wikiDomain
-        secretFile = appDirectory / (mastodonDomain + '.secret')
+
+        mastodonDomain = self.getOauthServer() 
+        wikiDomain = self.getDomain().lower()
+        secretFile =( "/app/data/oauth/" +
+                       wikiDomain + '/' +
+                       mastodonDomain + '.secret')
         errorURL = "/person/oauth?form.field.domain=" + mastodonDomain
-        if not secretFile.exists():
+        if not os.path.exists(secretFile):
             appName = (self.getSiteRoot().appName or (wikiDomain + " Oauth")).strip()
             try:
+                logger.info("Trying to create secret for %s", mastodonDomain)
                 app = Mastodon.create_app(
                     appName,
-                    api_base_url = wikiDomain,
+                    api_base_url = mastodonDomain,
                     redirect_uris = self.callbackURL(),
                     request_timeout = TIMEOUT,
                     to_file = str(secretFile)
                     )
             except Exception as e:
-                message = str(e)
+                logger.info("Failed to create secret for %s", mastodonDomain)                
+                message = ("Failed to register app for " +
+                           mastodonDomain +
+                           str(e))
                 self.sendMessage(message, type = "Error")
                 raise HTTPFound(errorURL)
 
-        if not secretFile.exists():
-            message = "Failed to create oauth appication. "
+        if not os.path.exists(secretFile):
+            logger.info("Failedto read the secret for %s", mastodonDomain)
+            message = "Failed to read the oauth secret. "
             self.sendMessage(message, type = "Error")                        
             raise HTTPFound(errorURL)
+        
         # No error, all is good.
         try:
+           logger.info("Trying to create a request url for %s", mastodonDomain)            
            mastodon= self.createMastodon(TIMEOUT)
            url = mastodon.auth_request_url(
                  redirect_uris = self.redirectURL(),
                  #   scopes=self.SCOPES,
                  force_login=False)
         except Exception as e:
+            logger.info("Failedto create the request URL for %s", mastodonDomain)
             message = str(e)
             self.sendMessage(message, type = "Error")
             raise HTTPFound(errorURL)
         # No error, all is good - redirect outside the try so this
         # HTTPFound (itself an Exception, used for control flow) is
         # not caught by the except block above.
+        oauthState = uuid.uuid4().hex
+        getSession()['oauthState'] = oauthState
+        url = url + "&" + urlencode({"state": oauthState})
+        logger.info("Redirecting to %s", url)
         raise HTTPFound(url)
-            
-    
-

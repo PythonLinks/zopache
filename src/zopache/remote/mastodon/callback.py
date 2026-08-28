@@ -1,3 +1,5 @@
+import logging
+
 from zopache.core.viewdecorators import *
 from zopache.core.baseform import Form
 from zopache.ttw.interfaces import IPrincipalFolder
@@ -17,7 +19,7 @@ class CallBack(Form, MastodonBot, Notify):
     def __init__(self,context,request):
         Form.__init__(self, context, request)
         Notify.__init__(self)
-        
+
     def update(self):
         if self.getOauthServer() == "github.com":
            GithubCallBackAction("Redirect","redirect")(self)

@@ -24,10 +24,10 @@ from dolmen.forms.ztk import InvariantsValidation
 @form_component
 @name ('gdpr')
 @context(IInternalPrincipal)
-class GDPR(BaseEditForm):
+class EditAddress(BaseEditForm):
     dataValidators = [InvariantsValidation]
     layoutName = "UserMenu"
-    fields = Fields(IGDPRForm)
+    fields = Fields(IAddressForm)
     fields["countryCode"].mode = HIDDEN
     fields["city"].mode = HIDDEN
     fields["region"].mode = HIDDEN

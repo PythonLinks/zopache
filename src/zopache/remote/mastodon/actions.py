@@ -9,13 +9,15 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import logging
+import hmac
 import requests
 from requests.models import urlencode
 from urllib.parse import parse_qs
 
 from mastodon import Mastodon
 
-from cromlech.browser import IURL
+from cromlech.browser import IURL, getSession
 from dolmen.forms.base import Action, SuccessMarker
 from dolmen.forms.base.markers import FAILURE, SUCCESS
 from dolmen.forms.base.utils import set_fields_data, apply_data_event
@@ -27,21 +29,27 @@ from zopache.pages.interfaces import IPage
 from zopache.core.breadcrumbs import Breadcrumbs
 from zopache.ttw.principalfolder import InternalPrincipal
 
+logger = logging.getLogger("oauth")
+
 class BaseAction(Action):
     def __call__(self, form):
         self.form = form
+        self.verifyOauthState()
+        # popped now, before the network calls below can raise --
+        # single-use, so it must not survive an exception either.
+        gdpr = getSession().pop("gdprPermission", None)
         code, result = self.getOauthCode()
         if result == FAILURE:
             return FAILURE
         userLoginProxy , result = self.getUserLoginProxy(code)
 
         userInfo, result = self.getUserInfo(userLoginProxy)
-                                        
+
         if result == FAILURE:
             return FAILURE
-        
+
         principalFolder = form.getPrincipalFolder()
-        userName = userInfo["username"]         
+        userName = userInfo["username"]
         email = userName + '@' + self.form.getOauthServer()
         handle = "@" + email
         if email in principalFolder.idByEmail:
@@ -50,11 +58,11 @@ class BaseAction(Action):
             person.updateAccount(userLoginProxy,userInfo)
             principalFolder.loginUser(person,form)
             newURL = self.form.getSiteRoot().homePage + '/index'
-            raise HTTPFound(newURL)    
-        else: 
-            gdpr = form.request.cookies.get("gdprPermission")
+            logger.debug("Logged in: %s", person.email)
+            raise HTTPFound(newURL)
+        else:
             if not (gdpr== "True"):
-                sendMessage("GDPR Permission is required.",type = "ERROR")
+                form.sendMessage("GDPR Permission is required.",type = "ERROR")
                 newURL = "/person/oauth?domain= " + form.getDomain()
                 raise HTTPFound(newURL)                
             person = principalFolder.newPerson(self.form)
@@ -69,9 +77,25 @@ class BaseAction(Action):
             person.postAddProcess(view = form)
             newURL = (form.getSecureLongURL (
                    context = form.getPrincipal())
-                  + '/address')        
+                  + '/address')
+            logger.debug("Created %s", person.email)
             raise HTTPFound(newURL)
-    
+
+    def verifyOauthState(self):
+        form = self.form
+        # popped immediately -- single-use, must not survive either a
+        # failed check or an exception raised later in this request.
+        expectedState = getSession().pop("oauthState", None)
+        returnedState = form.request.form.get("state")
+        valid = (expectedState is not None
+                 and returnedState is not None
+                 and hmac.compare_digest(expectedState, returnedState))
+        if not valid:
+            logger.debug("Oauth state mismatch")
+            form.sendMessage("OAuth state mismatch.", type = "ERROR")
+            newURL = "/person/oauth?domain= " + form.getDomain()
+            raise HTTPFound(newURL)
+
     def getOauthCode(self):
         code = self.form.request.form['code']
         try:
@@ -81,6 +105,7 @@ class BaseAction(Action):
             msg = "while trying to get the access code "
             msg +=  "an empty access token was returned. "
             msg += str(error)
+            logger.debug(msg)
             self.form.submissionError += msg
             self.form.submissionErrors.append(msg)            
             return '', FAILURE
@@ -110,7 +135,8 @@ class MastodonCallBackAction(BaseAction):
             msg +=  "was a problem. "
             msg += str(error)
             form.submissionError += msg
-            print (msg)
+            logger.debug(msg)
+            form.sendMessage(msg)
             return {},FAILURE
 
 class GithubCallBackAction(BaseAction):

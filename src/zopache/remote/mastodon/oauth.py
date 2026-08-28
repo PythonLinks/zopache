@@ -4,14 +4,23 @@ and if so, redirects them to /person/moauth/<mastodon_server>
 which does the real work of the mastodon oauth process flow.
 """
 
+import logging
+
 from zope.interface import Interface
 from zope.schema import DottedName
+
+from cromlech.browser import getSession
 
 from zopache.core.viewdecorators import *
 from zopache.core.baseform import Form
 from zopache.ttw.interfaces import IPrincipalFolder
 from dolmen.forms.base import Actions, Action, SuccessMarker
 from dolmen.forms.base.markers import FAILURE
+
+logger = logging.getLogger("oauth")
+logger.setLevel(logging.DEBUG)
+if not logger.handlers:
+    logger.addHandler(logging.FileHandler('/app/data/oauth.log', mode="w"))
 
 
 class IDomain(Interface):
@@ -45,17 +54,8 @@ class CreateAndUse(Action):
 
         domain = data['domain']
         newURL = "/person/moauth/" + domain
-        cookieValue = str(data["gdprPermission"])
-        form.request.response.set_cookie(
-            "gdprPermission",
-            cookieValue,
-            max_age=(3600),     #one hour
-            path="/",
-            domain=None,
-            secure=True,        # only send over HTTPS
-            httponly=True,      # not accessible via JS
-            samesite="Strict",  # "Strict", "Lax", or "None"
-            )
+        getSession()['gdprPermission'] = str(data["gdprPermission"])
+        logger.info("Logging in using  %s ", domain)
         return SuccessMarker('Logging In', True, url=newURL)
 
 @form_component

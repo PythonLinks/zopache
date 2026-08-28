@@ -26,7 +26,6 @@ class build_py(build_py_orig):
 
 install_requires = [
     'biscuits',
-    'cryptography',
     'crom',
     'cromlech.auth',
     'cromlech.browser',
