@@ -57,7 +57,7 @@ class Delete(Action):
         if not tootId:
             form.submissionError += "No Toot to Delete"            
         try:
-            result = form.getPrincipal().accountProxy.status_delete(tootId)
+            result = form.proxyForUser().status_delete(tootId)
             del form.context.tootURL 
             del form.context.tootId 
         except Exception as error:

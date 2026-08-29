@@ -9,10 +9,10 @@ class BaseBot (object):
         principal = self.request.principal
         if principal == anonymous:
             self.oauth()
-        proxy = getattr (principal,'accountProxy',None)
-        if proxy == None:
+        accessToken = getattr (principal,'accountProxy',None)
+        if accessToken == None:
             self.oauth()
-        return proxy
+        return self.createMastodon(TIMEOUT, accessToken)
 
     def getOauthServer(self):
         path = self.request.url.split('?')[0]
@@ -33,14 +33,15 @@ class BaseBot (object):
 
 
     # This is only called once moauth has create the secret file. 
-    def createMastodon(self, timeout):
+    def createMastodon(self, timeout, accessToken=None):
         context = self.context
         fileName =  ("/app/data/oauth/" +
                     self.getDomain().lower() +
                     "/" +
                     self.getOauthServer() +
                     ".secret")
-        mastodon = Mastodon(client_id = fileName, request_timeout = timeout)
+        mastodon = Mastodon(client_id = fileName, access_token = accessToken,
+                             request_timeout = timeout)
         return mastodon
 
     def getParams(self):
