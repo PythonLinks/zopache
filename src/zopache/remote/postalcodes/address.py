@@ -22,7 +22,7 @@ from dolmen.forms.ztk import InvariantsValidation
 
 
 @form_component
-@name ('gdpr')
+@name ('address')
 @context(IInternalPrincipal)
 class EditAddress(BaseEditForm):
     dataValidators = [InvariantsValidation]

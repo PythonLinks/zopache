@@ -57,12 +57,12 @@ class BaseAction(Action):
             person = principalFolder.getPrincipalById(personId)
             person.updateAccount(userLoginProxy,userInfo)
             principalFolder.loginUser(person,form)
-            newURL = self.form.getSiteRoot().homePage + '/index'
+            newURL = '/' + self.form.getSiteRoot().homePage 
             logger.debug("Logged in: %s", person.email)
             raise HTTPFound(newURL)
         else:
             if not (gdpr== "True"):
-                form.sendMessage("GDPR Permission is required.",type = "ERROR")
+                form.sendMessage("GDPR Permission is required.",type = "Error")
                 newURL = "/person/oauth?domain= " + form.getDomain()
                 raise HTTPFound(newURL)                
             person = principalFolder.newPerson(self.form)
@@ -92,7 +92,7 @@ class BaseAction(Action):
                  and hmac.compare_digest(expectedState, returnedState))
         if not valid:
             logger.debug("Oauth state mismatch")
-            form.sendMessage("OAuth state mismatch.", type = "ERROR")
+            form.sendMessage("OAuth state mismatch.", type = "Error")
             newURL = "/person/oauth?domain= " + form.getDomain()
             raise HTTPFound(newURL)
 
