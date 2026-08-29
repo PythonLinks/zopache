@@ -181,8 +181,10 @@ class InternalPrincipal(FileBase,Page):
         # token, never the client object itself, so ZODB never pickles a
         # requests.Session or version-specific internals.
         # Github: accountProxy is already a plain dict -- unaffected.
+        # userAccount (Mastodon's AttribAccessDict, Github's plain dict) is
+        # not stored at all -- the account identity is already in email/
+        # handle, and nothing in this codebase reads it back.
         self.accountProxy = getattr(accountProxy, 'access_token', accountProxy)
-        self.userAccountDict = dict(userAccount)
 
     def postAddProcess (self, view =None):
         #view.notifyUserNewUser()

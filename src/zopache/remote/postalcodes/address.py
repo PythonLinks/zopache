@@ -75,6 +75,7 @@ function createCountrySearchBox(fieldName) {{
     searchBox.accessToken = mapboxAccessToken;
     searchBox.options = {{types: 'country'}};
     searchBox.addEventListener('retrieve', onCountrySelected);
+    searchBox.addEventListener('clear', onCountryCleared);
     countryField.after(searchBox);
     searchBox.value = countryField.value;
 }}
@@ -84,6 +85,13 @@ function onCountrySelected(event) {{
     document.getElementById('form-field-countryName').value = country.name;
     document.getElementById('form-field-countryCode').value = country.country_code;
     lookupPostalCode();
+}}
+
+function onCountryCleared() {{
+    document.getElementById('form-field-countryName').value = '';
+    document.getElementById('form-field-countryCode').value = '';
+    document.getElementById('form-field-postalCode').value = '';
+    clearPostalCodeError();
 }}
 
 function clearPostalCodeError() {{
@@ -104,7 +112,15 @@ function showPostalCodeError(message) {{
 function lookupPostalCode() {{
     var postalCode = document.getElementById('form-field-postalCode').value;
     var countryCode = document.getElementById('form-field-countryCode').value;
-    if (!postalCode || !countryCode) {{
+    if (!postalCode) {{
+        clearPostalCodeError();
+        if (countryCode) {{
+            document.getElementById('form-field-countryCode').value = '';
+            document.getElementById('form-field-countryName').value = '';
+        }}
+        return;
+    }}
+    if (!countryCode) {{
         clearPostalCodeError();
         return;
     }}
