@@ -274,11 +274,6 @@ class Branch(SimpleBranch):
         if getattr(item,'articleURL',None):
             self.addRemoteURL(item,item.articleURL)
             
-        #if hasattr(item,'twitterId'):
-        #    twitterId = item.twitterId
-        #    if twitterId != "":
-        #        self.pagesByTwitterId[twitterId] = item
-
         if ancestorNames == []:
            if item.parent:
                ancestorNames = item.parent.ancestorNames 
@@ -286,57 +281,70 @@ class Branch(SimpleBranch):
         if ILocationContainer.providedBy(item):
            if indexingBranch:
                item.mapPoints =  OOBTree()
+                                                                     
+        match item.__class__.__name__:
+            case "Category":
+               item.reInit()
+
+            case "RegionalCategory":
+               item.reInit()           
+
+            case "RSS":
+               self.indexRSS(item)
            
-        if item.__class__.__name__  in  ["Category","RegionalCategory"]:
-           item.reInit()
+            case "JustRSS" :
+               self.indexRSS(item)           
 
-        elif item.__class__.__name__  in  ["RSS","JustRSS"]:
-           self.rssFeeds[item.name] = item 
-           for category in parentsWhichImplement(item,ICategory):
-               category.childFeeds += 1
-           #self.categoryCatalog.index_doc(
-           #        self.recordCategory(item),
-           #        item)               
-
-        elif item.__class__.__name__  == "JSONMarkdown":
-            importTime = int(item.creationTime)
-            self.contentByTime[importTime] = item
-            proxy = MarkdownProxy(item)
-            self.contentCatalog.index_doc(importTime,proxy)
+            case "JSONMarkdown":
+                importTime = int(item.creationTime)
+                self.contentByTime[importTime] = item
+                proxy = MarkdownProxy(item)
+                self.contentCatalog.index_doc(importTime,proxy)
             
-        elif item.__class__.__name__  == "RSSArticle":
-            importTime = int(item.importTime)
-            self.addTootedArticle(item)
-            self.contentByTime[importTime] = item
-            self.catalogContent(item,ancestorNames)
-            self.globalArticles [item.permaLink] = item
+            case "RSSArticle":
+                importTime = int(item.importTime)
+                self.addTootedArticle(item)
+                self.contentByTime[importTime] = item
+                self.catalogContent(item,ancestorNames)
+                self.globalArticles [item.permaLink] = item
 
-        elif item.__class__.__name__  == "Article":
-            self.addTootedArticle(item)
-            self.contentByTime[item.importTime] = item
-            self.catalogContent(item,ancestorNames)
+            case "Article":
+                self.addTootedArticle(item)
+                self.contentByTime[item.importTime] = item
+                self.catalogContent(item,ancestorNames)
                     
-        elif item.__class__.__name__ == 'Link':
-            importTime = int(item.importTime)
-            self.addTootedArticle(item)
-            self.contentByTime[importTime] = item
-            self.catalogContent(item,ancestorNames)
-                    
-        elif IVideo.providedBy(item):
-            self.contentByTime[ int(item.importTime)] = item
-            self.catalogContent(item,ancestorNames)            
-                    
-        elif ILocation.providedBy(item):
-            if item.__class__.__name__ =='Politician':
-               if not (hasattr(item, 'candidateInfo') or
-                    hasattr(item, 'electedOfficial')):
-                    return
-            for organization in (
-                       parentsWhichImplement(item,ILocationContainer)):
-                #This is a hack.  For some unknown reason
-                #IlocationContainer is providedBy CountryPostalCodes. 
-                if organization.__class__.__name__ != "CountryPostalCode":
-                   organization.mapPoints[item.name] = item
+            case 'Link':
+                importTime = int(item.importTime)
+                self.addTootedArticle(item)
+                self.contentByTime[importTime] = item
+                self.catalogContent(item,ancestorNames)
+                
+            case _ if IVideo.providedBy(item):
+               self.contentByTime[ int(item.importTime)] = item
+               self.catalogContent(item,ancestorNames)
+               
+            case _ if ILocation.providedBy(item):
+                if item.__class__.__name__ =='Politician':
+                   if not (hasattr(item, 'candidateInfo') or
+                            hasattr(item, 'electedOfficial')):
+                            return
+                for organization in (
+                    parentsWhichImplement(
+                    item,ILocationContainer)):
+                    #This is a hack.  For some unknown reason
+                    #IlocationContainer is providedBy CountryPostalCodes. 
+                    if (organization.__class__.__name__ !=
+                        "CountryPostalCode"):
+                        organization.mapPoints[item.name] = item
+ 
+    def indexRSS(self,item):        
+       self.rssFeeds[item.name] = item 
+       for category in parentsWhichImplement(item,ICategory):
+           category.childFeeds += 1
+        #self.categoryCatalog.index_doc(
+        #        self.recordCategory(item),
+        #        item)               
+
                    
     def catalogContent(self,item,ancestorNames):
         proxy = Proxy(item,ancestorNames)
@@ -366,72 +374,75 @@ class Branch(SimpleBranch):
 
         if getattr(item,'articleURL',None):
             self.deleteRemoteURL(item.articleURL)
-            
-        #if getattr(item,'twitterId',''):
-        #    del self.pagesByTwitterId [item.twitterId]
 
-        if item.__class__.__name__  in ["Category", "RegionalCategory"]:
-           pass 
-           #creationTime = int (item.creationTime)
-           #self.categoryIndex = IOBTree()
-           #del self.categoryIndex[item.creationTime] 
-           #self.categoryCatalog.unindex_doc(creationTime)
-       
-        elif item.__class__.__name__  in ["RSS","JustRSS"]:
+        match item.__class__.__name__:
+            # Category, RegionalCategory, RSS
+            # Do nothing
+            
+            case "RSS":
+               self.unindexRSS(item)
+
+            case "JustRSS":
+               self.unindexRSS(item)           
+           
+            case "JSONMarkdown":
+                importTime = int(item.creationTime)
+                if importTime in self.contentByTime:
+                   del self.contentByTime[importTime]
+                self.unCatalogContent(item)
+            
+            case "RSSArticle":
+                globalArticles = self.globalArticles
+                importTime = int(item.importTime)             
+                if importTime in self.tootedArticles:
+                   del self.tootedArticles[importTime]                         
+                if importTime in self.contentByTime:
+                   del self.contentByTime[importTime]
+                if item.permaLink in globalArticles:
+                    del globalArticles [item.permaLink]
+                self.unCatalogContent(item)
+
+            case "Article":
+                importTime = item.importTime
+                if importTime in self.tootedArticles:
+                   del self.tootedArticles[importTime]                         
+                if importTime in self.contentByTime:
+                   del self.contentByTime[importTime]
+                self.unCatalogContent(item)            
+           
+            case 'Link':
+                importTime = int(item.importTime)
+                if importTime in self.tootedArticles:
+                   del self.tootedArticles[importTime]             
+                del self.contentByTime[int(item.importTime)]
+                self.unCatalogContent(item)
+            case _ if IVideo.providedBy(item):
+                del self.contentByTime[int(item.importTime)]
+                self.unCatalogContent(item)
+
+            case _ if IOrganization.providedBy(item):
+                if item.__class__.__name__=='Politician':
+                  if not (hasattr(item, 'candidateInfo') or
+                     hasattr(item, 'electedOfficial')):
+                     return
+             
+                if (item.__class__.__name__ != 'OnlineOrganization'):
+                   for organization in (
+                        parentsWhichImplement(
+                            item,ILocationContainer)):
+                        # A Hack, described above. 
+                        if (organization.__class__.__name__ !=
+                            "CountryPostalCode"):
+                            del organization.mapPoints[item.name]
+
+    def unindexRSS(self,item): 
            del self.rssFeeds[item.name]
            for category in parentsWhichImplement(item,ICategory):
                category.childFeeds -= 1
            #self.categoryCatalog.unindex_doc(item.importTime)           
            #ERROR
 
-        elif item.__class__.__name__  == "JSONMarkdown":
-            importTime = int(item.creationTime)
-            if importTime in self.contentByTime:
-               del self.contentByTime[importTime]
-            self.unCatalogContent(item)
-            
-        elif item.__class__.__name__  == "RSSArticle":
-            globalArticles = self.globalArticles
-            importTime = int(item.importTime)             
-            if importTime in self.tootedArticles:
-               del self.tootedArticles[importTime]                         
-            if importTime in self.contentByTime:
-               del self.contentByTime[importTime]
-            if item.permaLink in globalArticles:
-                del globalArticles [item.permaLink]
-            self.unCatalogContent(item)
-
-        elif item.__class__.__name__  == "Article":
-            importTime = item.importTime
-            if importTime in self.tootedArticles:
-               del self.tootedArticles[importTime]                         
-            if importTime in self.contentByTime:
-               del self.contentByTime[importTime]
-            self.unCatalogContent(item)            
-           
-        elif item.__class__.__name__ == 'Link':
-            importTime = int(item.importTime)
-            if importTime in self.tootedArticles:
-               del self.tootedArticles[importTime]             
-            del self.contentByTime[int(item.importTime)]
-            self.unCatalogContent(item)
-            
-        elif IVideo.providedBy(item):
-            del self.contentByTime[int(item.importTime)]
-            self.unCatalogContent(item)
-                        
-        elif IOrganization.providedBy(item):
-            if item.__class__.__name__=='Politician':
-              if not (hasattr(item, 'candidateInfo') or
-                    hasattr(item, 'electedOfficial')):
-                 return
-             
-            if (item.__class__.__name__ != 'OnlineOrganization'):
-               for organization in (
-                       parentsWhichImplement(item,ILocationContainer)):
-                   # A Hack, described above. 
-                   if organization.__class__.__name__ != "PostalCode":                   
-                       del organization.mapPoints[item.name]                                      
+                       
     def checkName(self, name, object):
         """See zope.container.interfaces.INameChooser
         """

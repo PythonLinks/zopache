@@ -334,9 +334,9 @@ class SiteRoot(Branch,PageBase,PageMixIn):
     webClass = 'HomePage'
     appName = "A New Forest Wiki Application"
     homePage = ''
-    localLogin = True
     googleClientId = ""
-    localLogin = True
+    localLogin = False
+    mastodonLogin = True
     subscribeSlug = ""
     twitterId = ""
 
@@ -353,22 +353,24 @@ class SiteRoot(Branch,PageBase,PageMixIn):
          pass
 
 #USED ON GREEN MAPS         
-@implementer(IRootPage)         
+@implementer(IRootPage)
 class RootPage(SiteRoot):
     twitterId = ""
-    mastodonLogin = False    
     mqttServer = ""
     def getSiteRootFor(self,hostName):
         return self
- 
+
+    def delAttribute(self, name):
+        if name in self.__dict__:
+            del self.__dict__[name]
+            self._p_changed = True
+
 
 #FOR MULTIPLE SITES
 @implementer(ISiteRootPage)         
 class SiteRootPage(SiteRoot):
     twitterId = ""
     mqttServer = ""
-    localLogin = False
-    mastodonLogin = False
     
     def __init__(self):
        from zopache.ttw.principalfolder import PrincipalFolder

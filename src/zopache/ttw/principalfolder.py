@@ -180,11 +180,15 @@ class InternalPrincipal(FileBase,Page):
         # Mastodon: accountProxy is a live client -- store just its access
         # token, never the client object itself, so ZODB never pickles a
         # requests.Session or version-specific internals.
-        # Github: accountProxy is already a plain dict -- unaffected.
+        # Github: accountProxy is a plain dict -- getattr() can't read dict
+        # keys, so it must be extracted with .get(), not getattr().
         # userAccount (Mastodon's AttribAccessDict, Github's plain dict) is
         # not stored at all -- the account identity is already in email/
         # handle, and nothing in this codebase reads it back.
-        self.accountProxy = getattr(accountProxy, 'access_token', accountProxy)
+        if isinstance(accountProxy, dict):
+            self.accountProxy = accountProxy.get('access_token', accountProxy)
+        else:
+            self.accountProxy = getattr(accountProxy, 'access_token', accountProxy)
 
     def postAddProcess (self, view =None):
         #view.notifyUserNewUser()
