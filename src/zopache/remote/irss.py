@@ -2,7 +2,11 @@ from zope import schema
 from zopache.pages.interfaces import IPageBase, ILinkBase
 from zopache.remote.interfaces import IVoteable
 
-class IJustRSS(IPageBase):
+class IRSSBase(IPageBase):
+    pass
+
+# Gets most of its details from the parent class
+class IJustRSS(IRSSBase):
     rssURL=schema.URI(
         title = "Primary RSS URI",
         description ="""This is the source of new articles.  
@@ -17,41 +21,47 @@ class IJustRSS(IPageBase):
         default = False,
         )
     
-
-class IRSS(IJustRSS):
+class IRSS(IRSSBase):
     title=schema.TextLine(
         title = "RSS Feed Name",
         description ="What is the web site called?",
         required = True,
         )
-
+    
     description= schema.Text(
         title = 'Description',
-        description = """A brief introduction of this RSS Source.  """,
+        description = """A brief introduction of this web site.  """,
         required = False,
         default = '',
     )    
 
-    twitterId=schema.TextLine(
-        title = "Twitter Id",
-        description ="""Without the "@" sign?""",
-        required = False,
-        )
-
+    remoteURL= schema.URI(
+        title = 'URL',
+        description = ("The web site's URL."
+                       "Please include 'https://'"),
+        required = True,
+    )
+    
     mastodonId=schema.TextLine(
         title = "Mastodon Id",
         description ="""@User@Domain""",
         required = False,
         )    
-    
-    remoteURL= schema.URI(
-        title = 'URL',
-        description = """A URL That this page refers to. 
-             Please include 'https://'""",
-        required = True,
-    )
-    
 
+    rssURL=schema.URI(
+        title = "Primary RSS URI",
+        description ="""This is the source of new articles.  
+              Please include "https://" or "http://".""",
+        required = True,
+        )
+    
+    htmlSummary=schema.Bool(
+        title = "Is the Summary HTML?",
+        description ="For those sources where the summary contains html tags",
+        required = False,
+        default = False,
+        )
+    
     rssApproved=schema.Bool(
         title = "Is this feed approved for downloading",
         description ="We can block some feeds without deleting them.",

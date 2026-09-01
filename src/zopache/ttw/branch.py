@@ -258,7 +258,7 @@ class Branch(SimpleBranch):
                   itemType=ICanonical,
                   ancestorNames = [],
                   indexingBranch = False):
-
+            
         if not ICanonical.providedBy(item):
             return
 

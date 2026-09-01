@@ -37,18 +37,8 @@ class BaseArticle(NewsMixIn,Page):
          self.modificationTime= time.time()
          self.importTime = int(self.modificationTime)
 
-
-    def tootTwitterId(self):
-            twitterId = self.rssFeed.twitterId
-            if twitterId:
-                return ("\n\nBy @" + twitterId.strip() +
-                           "@twitter.com \n\n")
-            return ""
-        
-     
     def defaultToot(self,view):        
         return (self.tootTitlePlusDescription() +    
-                  self.tootTwitterId()+
                   self.tootArticleURL() +
                   self.tootVia(view) +
                   self.tootReadMore() )
@@ -57,7 +47,10 @@ class BaseArticle(NewsMixIn,Page):
                return" ".join (self.tagsAsArray())
 
     def tagsAsHTML(self):
-               return"<br>".join (self.tagsAsArray())
+         if (len(self.tagsAsArray()) < 5):
+               return "<br>".join (self.tagsAsArray())
+         else:
+               return " ".join (self.tagsAsArray())
            
     def tagsAsArray(self):       
                terms = set()

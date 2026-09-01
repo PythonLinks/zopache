@@ -4,7 +4,7 @@ import feedparser
 
 from dolmen.forms.base.markers import FAILURE, SUCCESS
 
-from zopache.remote.irss import  IJustRSS
+from zopache.remote.irss import  IRSSBase
 from zopache.core.interfaces import ITreeSecurity
 from zopache.core.viewdecorators import *
 from zopache.core.baseform import Form
@@ -46,7 +46,7 @@ class GetRSS(Form):
         feeds = []
         print ("Leaves = ",(leaves))
         for item in leaves:
-               if IJustRSS.providedBy(item):
+               if IRSSBase.providedBy(item):
                   if item.rssApproved:   
                       feeds.append(item)
         self.fetchArticles(feeds)
@@ -74,7 +74,7 @@ class GetRSS(Form):
 @name("fetch")
 @permissions('Manage')
 @implementer(ITreeSecurity)
-class GetustJRSS(GetRSS):
+class GetJustOneRSSFeed(GetRSS):
     def update(self):
         leaves = [self.context]
         self.updateCore(leaves)
@@ -100,7 +100,7 @@ class SiteRootGetImages(Form):
 
 
 @form_component
-@context(IJustRSS)
+@context(IRSSBase)
 @crom.target(IView)
 @name("getImages")
 @permissions('Manage')

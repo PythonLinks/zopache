@@ -139,10 +139,10 @@ class PugBase(TrustedHTML,JavascriptBase):
     html = defaultHTML
     title=u''
     className='Pug'
-    sideBySide = False
-    showJavascript = False
-    showIFrame = False
-    showHTML = False
+    sideBySide = True
+    showJavascript = True
+    showIFrame = True
+    showHTML = True
 
     def postProcess(self,view=None):
         parent = self.__parent__

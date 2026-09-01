@@ -58,10 +58,11 @@ class MastodonOauth(Form, MastodonBot):
 
         mastodonDomain = self.getOauthServer() 
         wikiDomain = self.getDomain().lower()
-        secretFile =( "/app/data/oauth/" +
-                       wikiDomain + '/' +
-                       mastodonDomain + '.secret')
+        secretDirectory = ( "/app/data/oauth/" + wikiDomain + '/')
+        secretFile = secretDirectory + mastodonDomain + '.secret'
         errorURL = "/person/oauth?form.field.domain=" + mastodonDomain
+        os.makedirs(secretDirectory, exist_ok=True)
+        
         if not os.path.exists(secretFile):
             appName = (self.getSiteRoot().appName or (wikiDomain + " Oauth")).strip()
             try:

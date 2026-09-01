@@ -22,7 +22,7 @@ from zopache.pages.addanonymous import AddAnonymousPageByTitle
 class AddRSS(AddAnonymousPageByTitle,Notify):
      interface = IAddRSS
      title = "Add an RSS Feed"
-     subTitle =""
+     subTitle ="Ask the admin to fetch the articles. "
      count = 0
      factory = RSS
      layoutName = "UserMenu"

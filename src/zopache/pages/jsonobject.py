@@ -54,7 +54,7 @@ class Categories(View):
     responseFactory = Response
     make_response = make_json_response
     def render(self):
-        if self.context.__name__ not in ['categories','climate-change']:
+        if self.context.__name__ not in ['all-news','climate-change']:
            return 'JSON is not available for that object.'
         asDict =  self.context.asDict()
         return json.dumps(asDict,  indent = 2)               

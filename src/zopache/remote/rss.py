@@ -191,12 +191,6 @@ class JustRSS(RSS):
     def remoteURL(self):
         return self.parent.remoteURL
     
-    @property
-    def twitterId(self):
-        return self.parent.twitterId
-
-    
-
 import crom
 from zopache.zmi.interfaces import IURLSegment
 @crom.adapter
