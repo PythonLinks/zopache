@@ -123,8 +123,21 @@ class MastodonCallBackAction(BaseAction):
     
         
 class GithubCallBackAction(BaseAction):
+    def getUserInfo(self,authorizationCode):
+        accessToken, result = self.getAccessToken(authorizationCode)
+        if result == FAILURE:
+            return '','', FAILURE
+        userName, result = self.getUserName(accessToken)
+        if result == FAILURE:
+            return '','', FAILURE
+        return  userName, accessToken, SUCCESS
+
     def getAccessToken(self,code):
-        pass # Shortly I iwll ask CLAUDE To write this and delete this line. 
+        tokenDict, result = self.getUserLoginProxy(code)
+        if result == FAILURE:
+            return '', FAILURE
+        accessToken = tokenDict['access_token'][0]
+        return accessToken, SUCCESS
 
     def getUserLoginProxy(self,code):
         url = "https://github.com/login/oauth/access_token"
@@ -147,25 +160,22 @@ class GithubCallBackAction(BaseAction):
             form.submissionErrors.append(msg)
             return {}, FAILURE
 
-    def getUserInfo(self,userLoginProxy):
-        # In the case of github, it is not really a long proxy.
+    def getUserName(self,accessToken):
         endPoint = "https://api.github.com/user"
-        accessToken = userLoginProxy [ 'access_token'][0]
         if not accessToken:
-            return {}, FAILURE
-        
+            return '', FAILURE
+
         headers = {'Authorization': 'token ' + accessToken}
         response = requests.get(endPoint, headers=headers)
         status = response.status_code
         if status == 200:
             result = response.json()
-            result['username'] = result['login']
-            return  result, SUCCESS
+            return  result['login'], SUCCESS
         else:
             msg = "while trying to get the user info "
             msg +=  "there was a problem. "
             form = self.form
             form.submissionError += msg
             form.submissionErrors.append(msg)
-            return {}, FAILURE
+            return '', FAILURE
 
