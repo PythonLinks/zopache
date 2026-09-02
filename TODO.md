@@ -21,3 +21,5 @@ For new domains, the directory /app/data/oauth/<YourDomainName>/ should be autom
 In /app there is a ton of junk.  It needs to all be deleted and put
 under version control.  Maybe the safe thing is to put it under
 version control, then delete stuff.  Now I know what to do!
+
+gptoots actions all use view.submissionError, but the condition on that will not display them.  

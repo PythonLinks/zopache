@@ -2,12 +2,14 @@ from time import time
 from datetime import datetime, timedelta
 
 
-from zope.interface import Interface
-from zope.schema import Text, Float
-
+from cromlech.security import unauthenticated_principal as anonymous
 from cromlech.browser.exceptions import HTTPFound
 from dolmen.forms.base import Action,Actions
 from dolmen.forms.base import Actions
+
+
+from zope.interface import Interface
+from zope.schema import Text, Float
 
 from zopache.core.viewdecorators import *
 from zopache.crud.forms import EditForm
@@ -57,7 +59,7 @@ class Delete(Action):
         if not tootId:
             form.submissionError += "No Toot to Delete"            
         try:
-            result = form.proxyForUser().status_delete(tootId)
+            result = form.getUserProxy().status_delete(tootId)
             del form.context.tootURL 
             del form.context.tootId 
         except Exception as error:
@@ -75,7 +77,7 @@ class Delete(Action):
             form.submissionError += "No Image to Delete"
             return 
         try:
-            result = form.proxyForUser().status_delete(tootId)
+            result = form.getUserProxy().status_delete(tootId)
             del form.context.tootURL 
             del form.context.tootId 
         except Exception as error:
@@ -120,10 +122,10 @@ class TootForm (EditForm,MastodonBot):
     layoutName = "UserMenu"
     twitterId = ''
     link = ''
-    accountProxy = False
     imageURL = ""
     scheduledAt = 0
     tempScheduledAt = 0
+
     
     def getDefaultImage(self):
         context = self.context
@@ -146,6 +148,9 @@ class TootForm (EditForm,MastodonBot):
 
         
     def update(self):
+        if self.request.principal == anonymous:
+            self.oauth()
+            
         self.tootURL =  getattr(self.context,'tootURL','')
         self.tempTootURL =  getattr(self,'tootURL','')
         
@@ -158,7 +163,7 @@ class TootForm (EditForm,MastodonBot):
            if hasattr(rssFeed,'twitterId'):
               self.twitterId = twitterId = rssFeed.twitterId
               self.link = ("https://twitter.com/" + twitterId) if twitterId else ''
-        self.canToot =  getattr (self.request.principal,'accountProxy',False)
+        self.canToot =  self.request.principal.accessToken
         
         self.template = self.getTemplates()['toot']
         #if self._toot == "":
@@ -190,7 +195,8 @@ class TootForm (EditForm,MastodonBot):
                         if self.className(context)=='Toot'
                         else None)
          try:
-            tootDict = self.proxyForUser().status_post(tootText,
+            tootDict = self.getUserProxy().status_post(
+                                            tootText,
                                             in_reply_to_id=inReplyToId,
                                             spoiler_text = spoilerText,
                                             media_ids=mediaList,
@@ -210,10 +216,10 @@ class TootForm (EditForm,MastodonBot):
                 at= tootDict["scheduled_at"]
                 if at:
                    self.sendMessage("Your Toot will show up at: " +
-                                 str(at))
+                                 str(at), type = "Error")
                 self.sendMessage("local Server Time: " +
-                                 str(datetime.now()))                
-            
+                                 str(datetime.now()), type = "Error")
+                            
             if tootDict.get('url',False):
                 target.tootURL = tootDict.url
 
@@ -294,7 +300,7 @@ class TootForm (EditForm,MastodonBot):
         data , mimeType, title = image.mastodonImage()
         
         try: 
-           mediaDict =   self.proxyForUser().media_post(media_file = data,
+           mediaDict =   self.getUserProxy().media_post(media_file = data,
                                           mime_type = mimeType,
                                           description = title,
                                           focus = None)

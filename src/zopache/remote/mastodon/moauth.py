@@ -34,10 +34,11 @@ class MastodonOauth(Form, MastodonBot):
         else:
             self.mastodonOauth()
 
+
     def githubOauth(self):
         # credential file missing -> show error, re-render this page
         try:
-            params = self.getParams()
+            params = self.getGithubParams()
         except FileNotFoundError:
             self.submissionErrors.append(
                 "Github oauth credential file does not exist.")
@@ -55,16 +56,13 @@ class MastodonOauth(Form, MastodonBot):
 
     
     def mastodonOauth(self):
-
-        mastodonDomain = self.getOauthServer() 
-        wikiDomain = self.getDomain().lower()
-        secretDirectory = ( "/app/data/oauth/" + wikiDomain + '/')
-        secretFile = secretDirectory + mastodonDomain + '.secret'
+        mastodonDomain = self.getOauthServer()
         errorURL = "/person/oauth?form.field.domain=" + mastodonDomain
-        os.makedirs(secretDirectory, exist_ok=True)
+        secretFile = self.getSecretFile(mastodonDomain)
         
         if not os.path.exists(secretFile):
-            appName = (self.getSiteRoot().appName or (wikiDomain + " Oauth")).strip()
+            appName = (self.getSiteRoot().appName or
+                       (self.getDomain() + " Oauth")).strip()
             try:
                 logger.info("Trying to create secret for %s", mastodonDomain)
                 app = Mastodon.create_app(
@@ -74,27 +72,24 @@ class MastodonOauth(Form, MastodonBot):
                     request_timeout = TIMEOUT,
                     to_file = str(secretFile)
                     )
+                # Is this really necessary
+                if not os.path.exists(secretFile):
+                    raise Exception ("Secret File Failed to be crated")
             except Exception as e:
                 logger.info("Failed to create secret for %s", mastodonDomain)                
                 message = ("Failed to register app for " +
-                           mastodonDomain +
+                           mastodonDomain + ' ' +
                            str(e))
                 self.sendMessage(message, type = "Error")
                 raise HTTPFound(errorURL)
 
-        if not os.path.exists(secretFile):
-            logger.info("Failedto read the secret for %s", mastodonDomain)
-            message = "Failed to read the oauth secret. "
-            self.sendMessage(message, type = "Error")                        
-            raise HTTPFound(errorURL)
-        
         # No error, all is good.
         try:
            logger.info("Trying to create a request url for %s", mastodonDomain)            
-           mastodon= self.createMastodon(TIMEOUT)
-           url = mastodon.auth_request_url(
-                 redirect_uris = self.redirectURL(),
-                 #   scopes=self.SCOPES,
+           app= self.createOauthApp()
+           url = app.auth_request_url(
+                 redirect_uris = self.callbackURL(),
+                 scopes=self.SCOPES,
                  force_login=False)
         except Exception as e:
             logger.info("Failedto create the request URL for %s", mastodonDomain)

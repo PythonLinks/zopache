@@ -58,10 +58,11 @@ class CreateAndUse(Action):
         logger.info("Logging in using  %s ", domain)
         return SuccessMarker('Logging In', True, url=newURL)
 
+
 @form_component
 @name ('oauth')
 @context(IPrincipalFolder)
-class OtherServer (Form):
+class ChooseServer (Form):
     title = "Mastodon or Fediverse Oauth Login"
     subTitle = 'Please enter the domain name of your home server.'
     allowAnonymous = True
@@ -73,3 +74,4 @@ class OtherServer (Form):
     def acquireTitle(self):
         return "Oauth Login"
 
+    

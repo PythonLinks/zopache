@@ -38,24 +38,23 @@ class BaseAction(Action):
         # popped now, before the network calls below can raise --
         # single-use, so it must not survive an exception either.
         gdpr = getSession().pop("gdprPermission", None)
-        code, result = self.getOauthCode()
+
+        authorizationCode, result = self.getOauthCode()
         if result == FAILURE:
             return FAILURE
-        userLoginProxy , result = self.getUserLoginProxy(code)
-
-        userInfo, result = self.getUserInfo(userLoginProxy)
-
+        
+        userName, accessToken, result = self.getUserInfo(authorizationCode)
         if result == FAILURE:
             return FAILURE
-
+        
         principalFolder = form.getPrincipalFolder()
-        userName = userInfo["username"]
+
         email = userName + '@' + self.form.getOauthServer()
         handle = "@" + email
         if email in principalFolder.idByEmail:
             personId = principalFolder.idByEmail[email]
             person = principalFolder.getPrincipalById(personId)
-            person.updateAccount(userLoginProxy,userInfo)
+            person.accessToken = accessToken
             principalFolder.loginUser(person,form)
             newURL = '/' + self.form.getSiteRoot().homePage 
             logger.debug("Logged in: %s", person.email)
@@ -69,9 +68,7 @@ class BaseAction(Action):
             self.form.new = person
             person.email = email
             person.handle = handle
-            if 'name' in userInfo:
-                person.yourName = userInfo['name']
-            person.updateAccount(userLoginProxy,userInfo)
+            person.accessToken = accessToken    
             principalFolder [person.__name__] = person
             principalFolder.loginUser(person,form)            
             person.postAddProcess(view = form)
@@ -106,44 +103,32 @@ class BaseAction(Action):
             msg +=  "an empty access token was returned. "
             msg += str(error)
             logger.debug(msg)
-            self.form.submissionError += msg
-            self.form.submissionErrors.append(msg)            
+            self.form.sendMessage (msg, type = "Error")
             return '', FAILURE
         return code, SUCCESS
 
 class MastodonCallBackAction(BaseAction):
-    def getUserLoginProxy(self,code):
-        form = self.form
-        try:
-           mastodon = form.userLoginProxy(code)
-           return mastodon, SUCCESS
-        except Exception as error:
-            msg = "while trying to get the access code "
-            msg +=  "there was a problem. "
-            msg += str(error)
-            form.submissionError += msg
-            form.submissionErrors.append(msg)
-            return '', FAILURE
+    def getUserInfo(self,authorizationCode):
+        accessToken , result = self.getAccessToken(authorizationCode)
+        if result == FAILURE:
+            return '','', FAILURE
+        userName, result = self.form.getNewUserName(accessToken)
+        if result == FAILURE:
+            return '','', FAILURE
+        return  userName, accessToken, SUCCESS
 
-    def getUserInfo(self, userLoginProxy):
-        form = self.form
-        try:
-            userInfo = userLoginProxy.me()
-            return  userInfo, SUCCESS
-        except Exception as error:
-            msg = "while trying to get the User Info"
-            msg +=  "was a problem. "
-            msg += str(error)
-            form.submissionError += msg
-            logger.debug(msg)
-            form.sendMessage(msg)
-            return {},FAILURE
-
-class GithubCallBackAction(BaseAction):
+    
+    def getAccessToken(self,code):
+        return self.form.getAccessToken(code)
+    
         
+class GithubCallBackAction(BaseAction):
+    def getAccessToken(self,code):
+        pass # Shortly I iwll ask CLAUDE To write this and delete this line. 
+
     def getUserLoginProxy(self,code):
         url = "https://github.com/login/oauth/access_token"
-        params = self.form.getParams()
+        params = self.form.getGithubParams()
         params['code'] = code
         response = requests.post(url,data=params)
 

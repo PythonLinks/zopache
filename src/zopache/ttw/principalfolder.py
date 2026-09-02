@@ -44,6 +44,7 @@ from zopache.pages.page import Page
 class InternalPrincipal(FileBase,Page):
     _handle  = ''
     _email = ''
+    accessToken = ''
     branchSize = 1    
     chatPermission = False
     contentType = "text/plain"
@@ -106,6 +107,8 @@ class InternalPrincipal(FileBase,Page):
             
         if 'user' in session:
             session.clear()
+            
+        self.accessToken = ''
         
     """ Pricipals which are stored in the ZODB Principal Folder"""
     def upVote(self,item):
@@ -176,19 +179,6 @@ class InternalPrincipal(FileBase,Page):
             except ValueError:
                 self._handle = oldHandle
                 raise
-    def updateAccount(self,accountProxy,userAccount):
-        # Mastodon: accountProxy is a live client -- store just its access
-        # token, never the client object itself, so ZODB never pickles a
-        # requests.Session or version-specific internals.
-        # Github: accountProxy is a plain dict -- getattr() can't read dict
-        # keys, so it must be extracted with .get(), not getattr().
-        # userAccount (Mastodon's AttribAccessDict, Github's plain dict) is
-        # not stored at all -- the account identity is already in email/
-        # handle, and nothing in this codebase reads it back.
-        if isinstance(accountProxy, dict):
-            self.accountProxy = accountProxy.get('access_token', accountProxy)
-        else:
-            self.accountProxy = getattr(accountProxy, 'access_token', accountProxy)
 
     def postAddProcess (self, view =None):
         #view.notifyUserNewUser()
@@ -209,8 +199,7 @@ class InternalPrincipal(FileBase,Page):
         return self.handle
 
     @property
-
-    def mastodonURL (self):
+    def mastodonServerURL (self):
         handle = self.handle.lstrip('@')
         try:
             username, domain = handle.split('@', 1)
@@ -220,7 +209,20 @@ class InternalPrincipal(FileBase,Page):
                 "Expected '@username@domain' or 'username@domain'."
             )
         
-        return f"https://{domain}/@{username}"
+        return f"https://{domain}"
+
+    @property
+    def mastodonProfileURL (self):
+        handle = self.handle.lstrip('@')
+        try:
+            username, domain = handle.split('@', 1)
+        except ValueError:
+            raise ValueError(
+                f"Invalid Mastodon ID format: {self.handle!r}. "
+                "Expected '@username@domain' or 'username@domain'."
+            )
+        
+        return f"https://{domain}/@{username}"    
 
 
 

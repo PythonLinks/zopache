@@ -1,26 +1,22 @@
+import os
+import logging
 from mastodon import Mastodon
+
+from dolmen.forms.base.markers import FAILURE, SUCCESS
 from cromlech.security import unauthenticated_principal as anonymous
+from cromlech.browser.exceptions import HTTPFound
 
 TIMEOUT = 7
 
-class BaseBot (object):
+logger = logging.getLogger("oauth")
 
-    def proxyForUser(self):
-        principal = self.request.principal
-        if principal == anonymous:
-            self.oauth()
-        accessToken = getattr (principal,'accountProxy',None)
-        if accessToken == None:
-            self.oauth()
-        return self.createMastodon(TIMEOUT, accessToken)
+class MastodonBot (object):
+    SCOPES = ['read:accounts','write:media','write:statuses']
 
     def getOauthServer(self):
         path = self.request.url.split('?')[0]
         return path.rstrip('/').split('/')[-1].lower()
-
-    def redirectURL(self):
-         return self.callbackURL()
-     
+        
     def callbackURL(self):
         domain = self.getDomain().lower()
         oauthServer = self.getOauthServer()
@@ -31,20 +27,73 @@ class BaseBot (object):
                   )
         return result
 
+    def getSecretFile(self,mastodonDomain):    
+        wikiDomain = self.getDomain().lower()
+        secretDirectory = ( "/app/data/oauth/" + wikiDomain + '/')
+        os.makedirs(secretDirectory, exist_ok=True)
+        secretFile = secretDirectory + mastodonDomain + '.secret'
+        return secretFile
 
-    # This is only called once moauth has create the secret file. 
-    def createMastodon(self, timeout, accessToken=None):
-        context = self.context
-        fileName =  ("/app/data/oauth/" +
-                    self.getDomain().lower() +
-                    "/" +
-                    self.getOauthServer() +
-                    ".secret")
-        mastodon = Mastodon(client_id = fileName, access_token = accessToken,
-                             request_timeout = timeout)
-        return mastodon
+    def createOauthApp(self):
+        oauthServer = self.getOauthServer()
+        app = Mastodon(client_id = self.getSecretFile(oauthServer),
+                       request_timeout = TIMEOUT)
+        return app
 
-    def getParams(self):
+    def getAccessToken(self,code):
+        app  = self.createOauthApp()
+        try: 
+            accessToken = app.log_in( code = code ,
+                    scopes = self.SCOPES,
+                    redirect_uri= self.callbackURL())
+        except Exception as error:
+            msg = "while trying to get the Access Token "
+            msg +=  "there was a problem. "
+            msg += str(error)
+            self.sendMessage(msg, type ="Error")
+            self.submissionError += msg
+            logger.debug(msg)
+            return '',FAILURE            
+        return  accessToken, SUCCESS
+
+    def oauth(self):
+        url = "/person/oauth"
+        raise HTTPFound( url)
+
+    #Only to be used in ./mauth
+    def getNewUserName(self,accessToken):
+        oauthServer = self.getOauthServer()        
+        proxy =  Mastodon (request_timeout = TIMEOUT,
+                         api_base_url = "https://" + oauthServer,
+                         access_token = accessToken)
+        try:
+            userInfo = proxy.me()
+            userName = userInfo["username"]        
+            return  userName, SUCCESS
+        except Exception as error:
+            msg = "while trying to get the User Info"
+            msg +=  "was a problem. "
+            msg += str(error)
+            self.sendMessage(msg, type ="Error")
+            self.submissionError += msg
+            logger.debug(msg)
+            return '',FAILURE
+
+
+    
+    def getUserProxy(self):
+        principal = self.request.principal
+        if principal == anonymous:
+            self.oauth()
+        accessToken = principal.accessToken
+        if not accessToken:
+            self.oauth()
+        proxy =  Mastodon (request_timeout = TIMEOUT,
+                         api_base_url=principal.mastodonServerURL,
+                         access_token = accessToken)
+        return proxy
+    
+    def getGithubParams(self):
         fileName =  ("/app/data/oauth/" +
                     self.getDomain().lower() +
                     "/" +
@@ -58,15 +107,4 @@ class BaseBot (object):
         params['client_secret'] = clientSecret
         return params
     
-class MastodonBot(BaseBot):
-    SCOPES = ['read:accounts','write:media','write:statuses']
-
-    def userLoginProxy(self,code):
-        context = self.context
-        mastodon  = self.createMastodon(TIMEOUT)
-        result = mastodon.log_in( code = code ,
-                               #scopes = self.SCOPES,
-                               redirect_uri= self.callbackURL())
-        return mastodon
     
-
