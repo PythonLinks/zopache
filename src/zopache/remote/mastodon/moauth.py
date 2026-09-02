@@ -45,7 +45,7 @@ class MastodonOauth(Form, MastodonBot):
             return
 
         params['redirect_uri'] = self.callbackURL()
-        params['scope'] = ["read:user", "read:email"]
+        params['scope'] = ["read:user", "user:email"]
         oauthState = uuid.uuid4().hex
         getSession()['oauthState'] = oauthState
         params['state'] = oauthState
@@ -69,6 +69,7 @@ class MastodonOauth(Form, MastodonBot):
                     appName,
                     api_base_url = mastodonDomain,
                     redirect_uris = self.callbackURL(),
+                    scopes = self.SCOPES,
                     request_timeout = TIMEOUT,
                     to_file = str(secretFile)
                     )
@@ -89,7 +90,7 @@ class MastodonOauth(Form, MastodonBot):
            app= self.createOauthApp()
            url = app.auth_request_url(
                  redirect_uris = self.callbackURL(),
-                 scopes=self.SCOPES,
+                 scopes = self.SCOPES,
                  force_login=False)
         except Exception as e:
             logger.info("Failedto create the request URL for %s", mastodonDomain)
