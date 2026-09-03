@@ -28,10 +28,9 @@ class Toot(Edit):
 class TootAndView(Toot):
     def __call__(self, form):
         Edit.__call__(self,form)
-        form.nowToot()
-        if getattr(form.context, 'tootURL',None):
-             raise HTTPFound(form.context.tootURL)
-
+        url = form.nowToot()
+        if url != '':
+             raise HTTPFound(url)
 
 class OnlyToot(Edit):
     def __call__(self, form):
@@ -224,7 +223,7 @@ class TootForm (EditForm,MastodonBot):
                 target.tootURL = tootDict.url
 
             if self.treeSecurity():
-               self.context.getEmbed(self)
+               self.context.getEmbed(self, target.tootURL)
                
             if tootDict.get('id',False):
                 target.tootId = tootDict['id']

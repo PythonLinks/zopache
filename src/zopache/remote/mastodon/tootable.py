@@ -69,10 +69,10 @@ class Tootable(object):
         result += self.parentalTags()
         return result
     
-    def getEmbed(self,view):
+    def getEmbed(self,view,tootURL):
 
-        if (tootURL := self.tootURL):
-           host = tootURL [8:].split('/')[0]            
+        if tootURL:
+           host = tootURL [8:].split('/')[0]
            embedURL = "https://"+ host + "/api/oembed?url=" + tootURL
            result = requests.get(embedURL)
            if result.status_code == 200:

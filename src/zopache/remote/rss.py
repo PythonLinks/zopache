@@ -157,7 +157,7 @@ class RSS(Link,UniqueName,RSSBase):
                continue
            new = self.createOneArticle(article,view,currentTime)
            articles.append(new)
-       return SUCCESS, articles
+       return SUCCESS, articles, len(entries)
    
     def postProcess(self,view = None):
         Link.postProcess(self, view = view)

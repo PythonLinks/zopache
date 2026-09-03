@@ -3,21 +3,34 @@ import asyncio
 import ssl
 import time
 import sys
+import os
 import logging
 from inspect import currentframe, getframeinfo
 
 from dolmen.forms.base.markers import FAILURE, SUCCESS
 from zopache.remote.irss import IJustRSS, IRSSArticle
 
-#logging.basicConfig(
-#   filename='/app/data/urls',
-#   filemode='w',
-#   format='%(message)s')
+os.makedirs('/app/data/logs', exist_ok=True)
+
+rss_logger = logging.getLogger("rss")
+rss_logger.setLevel(logging.INFO)
+if not rss_logger.handlers:
+    handler = logging.FileHandler('/app/data/logs/rss.log', mode="w")
+    handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    rss_logger.addHandler(handler)
+
+rss_error_logger = logging.getLogger("rss_errors")
+rss_error_logger.setLevel(logging.INFO)
+if not rss_error_logger.handlers:
+    handler = logging.FileHandler('/app/data/logs/rss_errors.log', mode="w")
+    handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
+    rss_error_logger.addHandler(handler)
 
 async def fetch(session,node,view):
    startTime = time.time()    
    duration =  0
    className = view.className(node)
+   isFeed = className in ["RSS","JustRSS"]
    if className in ["RSS","JustRSS"]:
       url = node.rssURL
    elif className == 'Article':
@@ -43,11 +56,19 @@ async def fetch(session,node,view):
           status = response.status
           if status == 200:
              result = await node.processResponse(session,response,view)
+             if isFeed:
+                articles = result[1]
+                entryCount = result[2]
+                rss_logger.info("%s: %d/%d articles saved",
+                                 node.title, len(articles), entryCount)
              return  result
           else:
              statusStr = str(status) + ' '
              logging.warning(statusStr + url)
-             return FAILURE,( node, 
+             if isFeed:
+                rss_error_logger.info("%s: status %s%s",
+                                       node.title, statusStr, url)
+             return FAILURE,( node,
                               ' status = ' +
                               statusStr +
                               url )
@@ -55,17 +76,22 @@ async def fetch(session,node,view):
    except asyncio.TimeoutError as err:
           duration =  time.time() - startTime
           duration = int(duration)
+          if isFeed:
+             rss_error_logger.info("%s: TIME OUT %ds %s",
+                                    node.title, duration, url)
           return FAILURE, node, "TIME OUT: "  + str(duration) + 's ' + url
           
    except:
           frameinfo = getframeinfo(currentframe())
           e = sys.exc_info()[0]
+          if isFeed:
+             rss_error_logger.info("%s: %s %s", node.title, str(e), url)
           return (FAILURE,
                   (frameinfo.filename + ' ' +
-                  str(frameinfo.lineno) + ' ' + 
+                  str(frameinfo.lineno) + ' ' +
                    str(e)),
                   node
-                  )      
+                  )
           return FAILURE, node ,  (" IN RSSDownload " +
                                    str(e) + ' ' + url) 
 

@@ -11,9 +11,10 @@ from zopache.pages.page import Link
 from zopache.remote.rssdownload import fetch
 from zopache.crud.getimage import createImageInFrom
 from zopache.remote.news.interfaces import IArticle
+from zopache.remote.mastodon.tootable import Tootable
 
 @implementer(IArticle)
-class Article (Link):
+class Article (Link, Tootable):
     webClass = "RSSLink"
     toots = None
     importTime = 0
