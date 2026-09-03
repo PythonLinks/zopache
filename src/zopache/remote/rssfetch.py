@@ -63,10 +63,18 @@ class GetRSS(Form):
     def fetchArticles(self, feeds):
 
         result = fetchAll(feeds,self)
+        totalArticles = 0
+        totalDownloads = 0
         for item in result:
-              if item[0] ==  FAILURE:  
+              if item[0] ==  FAILURE:
                  self.submissionErrors.append( "ERROR:" + str(item [1:]))
-        self.status='RSS Feeds were downloaded.'
+              elif item[0] == SUCCESS:
+                 totalDownloads += len(item[1])
+                 totalArticles += item[2]
+        feedLabel = "feed" if len(feeds) == 1 else "feeds"
+        self.status = (str(len(feeds)) + " " + feedLabel + " attempted, " +
+                       str(totalArticles) + " entries found, " +
+                       str(totalDownloads) + " new articles saved.")
 
 @form_component
 @context(IPageBase)
