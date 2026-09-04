@@ -89,7 +89,7 @@ class CrawlMastodon(Form,MastodonBot,RSSBase):
         self.root = self.getSiteRoot()
         #self.siteRoot is Needed elsewhere. 
         self.siteRoot = self.root
-        self.proxy =  self.myAccount()
+        self.proxy =  self.getUserProxy()
         account = self.context
         self.contentByTime = self.getSiteRoot().contentByTime
         self.mastodonArticles = self.root.get('mastodon-articles',None)

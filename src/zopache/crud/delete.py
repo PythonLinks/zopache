@@ -19,10 +19,10 @@ class Base(object):
         url = url + '/manage'
         context = view.context       
         self.deleteOne(context,view)
-        form.message(self.successMessage)           
+        view.message(self.successMessage)           
         return SuccessMarker('Deleted', True, url=url)
 
-class DeleteBranch(Action):
+class DeleteBranch(Action, Base):
     """Delete action for any locatable context.
     """
     successMessage = ("This branch  has been deleted.")
@@ -41,10 +41,10 @@ class DeleteBranch(Action):
         for child in parent.values():
             all.append(child)
             if IBTreeContainer.providedBy(child):
-                deleteDescendents(child,view)
+                self.deleteDescendents(child,view)
 
         for child in all:
-            self.deleteOne(child,form)
+            self.deleteOne(child,view)
             
 
 class DeleteLeaf(Action,Base):

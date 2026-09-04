@@ -4,10 +4,10 @@ from dolmen.container import IBTreeContainer
 from zopache.ttw.interfaces import IWebClass
 from zopache.core.getroot import getProducts
 
-#MAYBE THE WEBCLASS IS A STRING OR A POINTER       
+#MAYBE THE WEBCLASS IS A STRING OR A POINTER
 def webClassAcquire(context,name, marker = object):
-    if name in context:
-          return context[name] 
+    if IBTreeContainer.providedBy(context) and name in context:
+          return context[name]
     if hasattr(context, "webClass"):
         webClass = context.webClass
         if IWebClass.providedBy(context):

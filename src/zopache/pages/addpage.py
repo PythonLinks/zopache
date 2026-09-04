@@ -89,7 +89,7 @@ class AddPage(AddAuthorizedPage):
     
 from zopache.application.interfaces import IRootContainer
 @view_component
-@name('addRootPage')
+@name('addSiteRootPage')
 @target(IView)
 @context(IRootContainer)
 @implementer(ITreeSecurity)

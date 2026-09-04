@@ -2,7 +2,6 @@ from zope.interface import Interface
 from cromlech.webob.response import Response
 from dolmen.view import View, make_view_response
 from cromlech.browser import IView
-from cromlech.browser.exceptions import HTTPFound
 from dolmen.view import View, view_component
 
 from zopache.core.viewdecorators import *
@@ -13,12 +12,9 @@ from zopache.core.viewdecorators import *
 @target(IView)
 class NotFound(View):
     responseFactory = Response
-    make_response = make_view_response    
-    def update(self):
-           page = ("/not-found?slug=" +
-                   self.slug +
-                   "&context=" +
-                   self.context.__name__)
-           raise HTTPFound(page)
+    make_response = make_view_response
+
+    def render(self):
+        return "Not found: " + self.slug + " (" + self.request.url + ")"
 
 

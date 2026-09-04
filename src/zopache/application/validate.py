@@ -52,14 +52,13 @@ class VirtualHostValidator(object):
         context = self.form.context           
         for value in theDict.values():
            path = value.split("/")
-           temp = context
            for item in path:
-               if item not in temp:
+               if item not in context:
                     msg = ""
+                    msg = value + " does not exist in this directory."
                     error =ArgsError(title=msg, identifier= key)
                     errors.append(error)
                     break
-               temp = temp [item]
         return errors        
 
 

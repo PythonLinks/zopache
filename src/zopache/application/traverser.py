@@ -12,10 +12,6 @@ from zopache.ttw.interfaces import ITemplate
 from zopache.ttw.interfaces import IWebClass
 from zopache.ttw.acquisition import webClassAcquire
 from zopache.python.interfaces import IDirectory
-from zopache.application.notfound import NotFound
-
-class NotFound(Exception):
-    pass
 
 class Traverser(object):
     def __init__(self,view_lookup):
@@ -37,7 +33,9 @@ class Traverser(object):
               view = self.view_lookup(request, zopacheTemplate, 'index')
            
            if view == None :
-              raise NotFound(zopacheTemplate, name, request)              
+              view = self.view_lookup(request, context, "not-found")
+              view.slug = name
+              return context, view
 
            if hasattr(view, 'setDisplayObject'):
                 view.setDisplayObject(zopacheTemplate)           
