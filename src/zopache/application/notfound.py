@@ -12,7 +12,8 @@ from zopache.core.viewdecorators import *
 class NotFound(Page):
 
     def render(self):
-        return "Not found: " + self.slug + " (" + self.request.url + ")"
+        return ("Not found: " + self.slug +
+                "<br>In URL: " + self.request.url )
 
     def acquireTitle(self):
         return "Not Found Response"

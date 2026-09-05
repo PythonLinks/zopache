@@ -3,7 +3,6 @@ from dolmen.container import IBTreeContainer, BTreeContainer
 from chameleon import PageTemplate
 from zopache.core import Leaf
 from zope.interface import implementer
-from zopache.ttw.trusted import Trusted
 from zopache.ttw.interfaces import (ISource,
                                     IHTML,
                                     IAceHTML,
@@ -52,11 +51,15 @@ class HTMLBase(object):
         else: 
            return 'Please edit the  Title'
 
-class TrustedHTML(Trusted,HTMLBase):
+class TrustedHTML(HTMLBase):
     trusted = True    
     icon="ttwicons/CkHTML.svg"
+    
     def postProcess(self,view=None):
-        self.setTrusted(view = view)
+        if view.isDeveloper() and view.treeSecurity():
+            self.trusted = True
+        else:
+            self.trusted = False
         if hasattr(self,'_v_compiledTemplate'):
            del self._v_compiledTemplate 
         self.compileTemplate()
