@@ -420,7 +420,7 @@ class Branch(SimpleBranch):
                 del self.contentByTime[int(item.importTime)]
                 self.unCatalogContent(item)
 
-            case _ if IOrganization.providedBy(item):
+            case _ if ILocation.providedBy(item):
                 if item.__class__.__name__=='Politician':
                   if not (hasattr(item, 'candidateInfo') or
                      hasattr(item, 'electedOfficial')):

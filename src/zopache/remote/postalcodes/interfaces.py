@@ -4,6 +4,8 @@ from zopache.pages.interfaces import (ILocation,
                                       IPage,
                                       IPageBase)
 
+from zopache.crud.interfaces import IMoveable
+
 from zopache.json.interfaces import IClass
 
 class IAddressForm(Interface):
@@ -53,7 +55,7 @@ class IAddressForm(Interface):
         required = True,
     )
 
-class ICountryPostalCode(ILocation, IPage):
+class ICountryPostalCode(ILocation, IPage, IMoveable):
     pass
 
     
