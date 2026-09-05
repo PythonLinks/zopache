@@ -76,3 +76,9 @@ class Acquisition(object):
     def templateParentalAcquire(self, name):
         result = ParentalAcquire(self.zopacheTemplate)
         return result [name]
+
+    def parentalAcquireAndView(self, name):
+        item = self.parentalAcquire(name)
+        if not item:
+            return ''
+        return item(view=self)    

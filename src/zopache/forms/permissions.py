@@ -7,8 +7,7 @@ from zopache.application.choices import fromList
 class IPermissions(Interface): 
     permissions = Set(
         value_type =Choice(source = fromList(['Manage',
-                                              'Python',
-                                              'Vote',
+                                              'Party',
                                               'Develop',
                                               'Curate'])),
         title="Permissions",

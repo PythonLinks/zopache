@@ -20,7 +20,7 @@ from zopache.crud.utils import getFactoryFields, getAllFields
 from zopache.core.uniquename import UniqueName
 from zopache.crud.actions import AddByName, AddByTitle
 from zopache.ttw.mail import Notify
-
+from zopache.core.interfaces import ITreeSecurity
 
 class BasicForm(Form,Breadcrumbs,Notify):
     ignoreContent = True
@@ -174,7 +174,7 @@ from zopache.crud.delete import (DeleteLeaf,
 @form_component
 @name ('delete')
 @context(IPageBase)
-@permissions('Manage')    
+@implementer(ITreeSecurity)
 class DeleteForm(Form):
     """A confirmation for to delete an object.
     """
@@ -188,9 +188,14 @@ class DeleteForm(Form):
     <b>So what would you like to delete?</b></p>
     
     """
-    
-    actions = Actions(DeleteLeaf("Leaf","Leaf"),
-                      DeleteChildren("Children","Children"),
-                      DeleteBranch("Branch","Branch"),
-                      formactions.Cancel("Cancel","Cancel"))
+    @property
+    def actions(self):
 
+        actionList = [ DeleteLeaf("Leaf","Leaf")]
+        if self.isManager():
+           actionList.append(DeleteChildren("Item + Children","Children"))
+           #This one is too dangerous, so it is removed. 
+           #DeleteBranch("Branch","Branch"),
+        actionList.append(formactions.Cancel("Cancel","Cancel"))
+        actions = Actions(*actionList)    
+        return actions

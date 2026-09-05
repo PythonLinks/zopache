@@ -10,7 +10,7 @@ from cromlech.security import unauthenticated_principal as anonymous
 from cromlech.dawnlight.publish import shortcuts, PublicationError
 
 class Publisher (DawnlightPublisher):
-    """Traverses model objects, and looks up views. 
+    """Traverses model objects, and looks up views.
     """
     def __init__(self,view_locator):
          self.view_locator=view_locator
@@ -20,15 +20,15 @@ class Publisher (DawnlightPublisher):
 
     def newContext(self,newContext):
         self.longPath.append(newContext)
-        
+
         if not IPage.providedBy (newContext):
             self.shortPathOkay = False
         if IProxyPage.providedBy (newContext):
             self.shortPathOkay = False
         if not self.shortPathOkay:
             self.shortPath.append(newContext)
-            
-            
+
+
     @safeguard
     def publish(self, request, root,handle_errors):
         view=None
@@ -48,9 +48,9 @@ class Publisher (DawnlightPublisher):
                             'editjson',
                           'fix',
                           'editors',
-                          'aceedit',  
+                          'aceedit',
                           'addRootCategory',
-                          'addPoliticiansSite',  
+                          'addPoliticiansSite',
                           'editHosts']:
                  pass
              else:
@@ -63,8 +63,8 @@ class Publisher (DawnlightPublisher):
                    siteRootName = splitDomain[0]
                    if siteRootName in context:
                       context = context[siteRootName]
-                
-                 
+
+
         traverser=Traverser(self.view_locator)
         crumbs = dawnlight.parse_path(path, shortcuts)
         while crumbs:
@@ -74,7 +74,7 @@ class Publisher (DawnlightPublisher):
               historyTraverser=HistoryTraverser(context,None)
               context=historyTraverser.traverse('history',name)
               continue
-          
+
            #NOW FOR THE REGULAR TRAVERSER
            context, view =traverser(context,request,name,publisher)
            if view != None:
@@ -82,12 +82,12 @@ class Publisher (DawnlightPublisher):
 
         #If that did not work  check for a template or view
         if view is  None:
-           name = 'index' 
+           name = 'index'
            context, view=traverser(context,request,name,publisher)
 
         #If still no view, check for a view on the template
         if view is  None:
-           name = 'index' 
+           name = 'index'
            context, view=traverser(context,request,name,publisher)
 
 
@@ -98,18 +98,32 @@ class Publisher (DawnlightPublisher):
             factory = IResponseFactory(view)
             response = factory()
 
-            if  'image' in response.headers['content-type']: #A Month
+            content_type = response.headers['content-type']
+            origin = request.headers.get('Origin')
+
+            if 'image' in content_type: #A Month
                 response.headers['cache-control'] = "public, max-age=2592000"
+            elif (('javascript' in content_type or 'json' in content_type)
+                  and origin in CORS_ALLOWED_ORIGINS):
+                response.headers['access-control-allow-origin'] = origin
+                response.headers['access-control-allow-methods'] = "GET"
+                response.headers['cache-control'] = "no-store"
             elif request.principal != anonymous:
                 response.headers['cache-control'] = "no-store"
-            elif  'javascript' in response.headers['content-type']:
+            elif 'javascript' in content_type:
                 response.headers['cache-control'] = "public, max-age=86400"
-            elif  'json' in response.headers['content-type']:
+            elif 'json' in content_type:
                 response.headers['cache-control'] = "public, max-age=86400"
             else:
                 response.headers['cache-control'] = "public, max-age=3600"
-                
+
 
             return response
 
-        raise PublicationError('%r can not be rendered.' % context)                
+        raise PublicationError('%r can not be rendered.' % context)
+
+CORS_ALLOWED_ORIGINS = (
+    "https://wiki.pythonlinks.info",
+    "https://uncensorednews.us",
+    "https://greenmaps.us",
+)

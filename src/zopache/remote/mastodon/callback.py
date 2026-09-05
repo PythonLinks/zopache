@@ -17,6 +17,10 @@ class CallBack(Form, MastodonBot,Notify):
     subTitle = """If you see this, it means the Mastodon server
     is overloaded, please try again. """
 
+    def __init__(self,context,request):
+        Form.__init__(self,context,request)
+        Notify.__init__(self)
+
     def update(self):
         if self.getOauthServer() == "github.com":
            GithubCallBackAction("Redirect","redirect")(self)
