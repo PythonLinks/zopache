@@ -153,6 +153,16 @@ class HTML(TrustedHTML,Leaf):
 class AceHTML(TrustedHTML,Leaf):
     icon="ttwicons/HTML.svg"
 
+@implementer(IAceHTML)
+class AceCMSHTML(AceHTML):
+    """Compatibility shim for old pickled data from before the AceHTML rename."""
+    pass
+
+@implementer(IAceHTML)
+class AceIFrameHTML(AceHTML):
+    """Compatibility shim for old pickled data from before the AceHTML rename."""
+    pass
+
 @implementer(IAceHTMLPage)
 class HTMLPage(TrustedHTML,Leaf):
     icon="ttwicons/HTML.svg"    

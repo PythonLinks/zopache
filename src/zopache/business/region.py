@@ -14,9 +14,13 @@ class RegionBase(MapBase):
     specialization = ''
     showChildren = True
     webClass = "Region"
-    remoteURL = ""    
+    remoteURL = ""
+    latitude = 51
+    longitude = 0
     def redundantRemoteURL(self):
         return ""
+
+
 
     def getColor(self):
         #COLOR BASED ON CLASS

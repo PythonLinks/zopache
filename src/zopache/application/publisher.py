@@ -98,10 +98,18 @@ class Publisher (DawnlightPublisher):
             factory = IResponseFactory(view)
             response = factory()
 
+            status = getattr(view, 'status', 200)
+            if status != 200:
+                response.status_int = status
+
             content_type = response.headers['content-type']
             origin = request.headers.get('Origin')
 
-            if 'image' in content_type: #A Month
+            if status != 200:
+                #Never let an error response (eg. not-found) be cached
+                #as if it were a valid page.
+                response.headers['cache-control'] = "no-store"
+            elif 'image' in content_type: #A Month
                 response.headers['cache-control'] = "public, max-age=2592000"
             elif (('javascript' in content_type or 'json' in content_type)
                   and origin in CORS_ALLOWED_ORIGINS):

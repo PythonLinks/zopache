@@ -234,7 +234,7 @@ document.getElementById('form-action-Save').form.addEventListener('submit', chec
                del principal.__parent__[name]
                principalFolder[name] = principal
            view.submissionError += "You did not provide location information and "
-           view.submissionError += "therefore are not listed. "
+           view.submissionError += "therefore you are not listed. "
            return
 
         #Only 1 data
@@ -259,8 +259,10 @@ document.getElementById('form-action-Save').form.addEventListener('submit', chec
                 principalFolder.removeItem(principal)
             else:
                 del principal.__parent__[name]
+            # Needed for indexing to work properly.     
+            principal.__parent__ = postalContainer
             postalContainer[name] = principal
-
+            
         del principal.latitude
         del principal.longitude
         newURL = "/world"
