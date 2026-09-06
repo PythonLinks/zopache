@@ -4,6 +4,7 @@ and if so, redirects them to /person/moauth/<mastodon_server>
 which does the real work of the mastodon oauth process flow.
 """
 
+import os
 import logging
 
 from zope.interface import Interface
@@ -20,7 +21,8 @@ from dolmen.forms.base.markers import FAILURE
 logger = logging.getLogger("oauth")
 logger.setLevel(logging.DEBUG)
 if not logger.handlers:
-    logger.addHandler(logging.FileHandler('/app/data/oauth.log', mode="w"))
+    os.makedirs('/app/data/logs', exist_ok=True)
+    logger.addHandler(logging.FileHandler('/app/data/logs/oauth.log', mode="a"))
 
 
 class IDomain(Interface):

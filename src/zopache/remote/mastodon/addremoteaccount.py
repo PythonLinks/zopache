@@ -12,13 +12,13 @@ from zopache.ttw.htmlviews import AddCkHTMLBase
 from zopache.pages.addpage import AddByTitleForm
 
 @view_component
-@name ('addRemoteAccount')
+@name ('addTimeline')
 @target(IView)
 @context(IPageBase)
 class AddRemoteAccount(AddByTitleForm):
      interface = IAddRemoteAccount
-     title = "Add a Remote Mastodon Account"
-     subTitle =""
+     title = "Add a Timeline"
+     subTitle ="Ask the admin to fetch the content"
      count = 0
      factory = RemoteAccount
      layoutName = "UserMenu"
@@ -27,7 +27,7 @@ class AddRemoteAccount(AddByTitleForm):
          return data['mastodonId'].strip()
      
      def newURL(self,baseURL):
-        return baseURL + '/manage'
+        return baseURL 
 
 
 
