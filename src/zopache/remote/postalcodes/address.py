@@ -208,7 +208,9 @@ document.getElementById('form-action-Save').form.addEventListener('submit', chec
                mapName = "usa" 
             directory = root[mapName]
             if directory == None:
-               directory = Region()                
+               directory = Region()
+               directory.title = "World Map"
+               directory.webClass = "FediMaps"
                root[mapName] = directory
             postalContainer = CountryPostalCode(countryCode, postalCode,
                                                 city,

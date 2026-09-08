@@ -371,6 +371,7 @@ class RootPage(SiteRoot):
 class SiteRootPage(SiteRoot):
     twitterId = ""
     mqttServer = ""
+    mapBoxKey =""
     
     def __init__(self):
        from zopache.ttw.principalfolder import PrincipalFolder

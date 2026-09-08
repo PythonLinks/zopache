@@ -113,3 +113,9 @@ class Root(object):
             result += item.render(self, view = self)
         return result
     
+    def getSiteRootAndView(self, name,view):
+        root = self.getSiteRoot()    
+        item = root.get(name, None)
+        if not item:
+            return ''
+        return item(view=view)    

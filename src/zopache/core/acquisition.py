@@ -78,7 +78,4 @@ class Acquisition(object):
         return result [name]
 
     def parentalAcquireAndView(self, name):
-        item = self.parentalAcquire(name)
-        if not item:
             return ''
-        return item(view=self)    

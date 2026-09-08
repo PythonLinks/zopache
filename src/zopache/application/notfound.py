@@ -11,7 +11,7 @@ from zopache.core.viewdecorators import *
 @target(IView)
 class NotFound(Page):
 
-    status = 404
+    httpStatus = 404
 
     def render(self):
         return ("Not found: " + self.slug +

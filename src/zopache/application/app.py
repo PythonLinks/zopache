@@ -53,6 +53,12 @@ class Session(object):
 @secured
 def publish(environ, start_response, principal):
 
+    # nginx terminates TLS and proxies to us over plain HTTP; trust its
+    # X-Forwarded-Proto (set explicitly in backend.include, overwriting
+    # any client-supplied value) to recover the real client-facing scheme.
+    if environ.get('HTTP_X_FORWARDED_PROTO') == 'https':
+        environ['wsgi.url_scheme'] = 'https'
+
     # We instanciate an IRequest object.
     # Here, we use WebOB but you can implement your own
     # or adapt the one of your liking.

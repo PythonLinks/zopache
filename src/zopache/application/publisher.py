@@ -98,7 +98,7 @@ class Publisher (DawnlightPublisher):
             factory = IResponseFactory(view)
             response = factory()
 
-            status = getattr(view, 'status', 200)
+            status = getattr(view, 'httpStatus', 200)
             if status != 200:
                 response.status_int = status
 
