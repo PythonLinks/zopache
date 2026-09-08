@@ -19,7 +19,7 @@ class Base(object):
         url = url + '/manage'
         context = view.context       
         self.deleteOne(context,view)
-        view.message(self.successMessage)           
+        view.sendMessage(self.successMessage)           
         return SuccessMarker('Deleted', True, url=url)
 
 class DeleteBranch(Action, Base):

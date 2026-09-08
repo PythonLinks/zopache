@@ -18,11 +18,13 @@ from zopache.crud.getimage import getImage
 from zopache.remote.voteable import Voteable
 from zopache.pages.page import Page    
 from zopache.remote.news.mixin import NewsMixIn
+from zopache.remote.mastodon.tootable import Tootable
 
-class BaseArticle(NewsMixIn,Page):    
+class BaseArticle(NewsMixIn,Page,Tootable):    
 
     _category = ""
     importTime = 0
+    lastTootTime = 0
     isArticle = True
     imageURL = ""
     description = ""

@@ -183,7 +183,6 @@ class DeleteForm(Form):
     Delete Node only works if it is empty.<br>
     Delete Children, deletes the content, but leaves the logo or
     banner image. <BR>
-    Delete Branch gets rid of everything.<br>
     Deleted objects are first unindexed. <br><br>
     <b>So what would you like to delete?</b></p>
     
