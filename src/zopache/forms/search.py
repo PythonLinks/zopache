@@ -1,8 +1,6 @@
 from hypatia.catalog import CatalogQuery
-import hypatia 
+import hypatia
 from hypatia.query import Contains
-from itertools import islice
-from more_itertools import take
 
 def searchCore(view, aDict,categoryName,limit):
     context = view.context
@@ -79,7 +77,8 @@ def searchADictionary(view,
                                   aDict,
                                   categoryName,
                                   limit)
-    
+    docIds = list(docIds)
+
     searchTerm = aDict.get("query","")
     if searchTerm:
        return numDocs, [], docIds
@@ -121,10 +120,10 @@ def searchADictionary(view,
     featuredTimes =  [item.importTime for item in featuredItems]           
     return numDocs, featuredTimes,  notFeaturedIds
 
-def valuesPlusRemainder(view,docIds, count = 6):
+def valuesPlusRemainder(view, docIds, count=6):
     index = view.getSiteRoot().contentByTime
-    values = [index[int(x)] for x in take(count,docIds)]
-    return values, islice(docIds,count,None)
+    values = [index[int(x)] for x in docIds[:count]]
+    return values, docIds[count:]
 
 def justValues(view,docIds):
     index = view.getSiteRoot().contentByTime
