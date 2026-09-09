@@ -243,7 +243,7 @@ document.getElementById('form-action-Save').form.addEventListener('submit', chec
         if (countryCode == "") != (postalCode == ""):
             raise HTTPBadRequest(self.request.url)
 
-
+        return
         # Data looks good, get or create the postal container.
         postalContainer = self.getPostalContainer(root,
                                                   principal.countryCode,
