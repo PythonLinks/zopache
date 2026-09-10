@@ -12,6 +12,7 @@ from zopache.application.source import Source
 class MastodonArticles(Source):
     #webClass = "MastodonArticles"
     webClass = "RSS"
+    webApproved = True
     remoteURL = ""
     description = "Articles mentioned on Mastodon."
     htmlSummary = True

@@ -33,7 +33,7 @@ class EditAddress(BaseEditForm):
     fields["region"].mode = HIDDEN
     fields["latitude"].mode = HIDDEN
     fields["longitude"].mode = HIDDEN
-    subTitle = ""
+    subTitle = "You are free to leave it blank. "
     allowAnonymous = False
 
     def update(self):
@@ -42,7 +42,7 @@ class EditAddress(BaseEditForm):
         BaseEditForm.update(self)
         
     def acquireTitle(self):
-       return 'GDPR Permissions'
+       return 'Your Location (Optional)'
 
     def newURL(self,new):
         root = self.getSiteRoot()

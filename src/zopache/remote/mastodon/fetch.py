@@ -11,7 +11,7 @@ from zopache.remote.mastodon.remoteaccount import RemoteAccount
 from zopache.core.baseform import Form
 
 
-regexp = re.compile('https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+')
+regexp = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+')
 
 @view_component
 @context(IRemoteAccount)
@@ -28,11 +28,11 @@ class Reset(Form):
         self.status='Account was reset.'
         #logging.info ("Reset account ", context.mastodonId)
 
-8888
+
 @view_component
 @context(IRemoteAccount)
 @target(IView)
-@name("reset2")
+@name("reset20")
 @permissions('Manage')
 class Reset2(Form):
     title = "Reset the most recent toot id. "
@@ -52,8 +52,8 @@ class Reset2(Form):
 @view_component
 @context(IRemoteAccount)
 @target(IView)
-@name("fetchxyz")
-#@permissions('Manage')
+@name("fetch")
+@permissions('Manage')
 class CrawlMastodon(Form,MastodonBot,RSSBase):
 
     #First the title
@@ -107,15 +107,17 @@ class CrawlMastodon(Form,MastodonBot,RSSBase):
         Form.update(self)
         
     def render(self):
-        self.duration = (self.startTime - time.time())/60 
+        self.duration = (self.startTime - time.time())/60
         logging.info ("Duration = " +  str(self.duration))
+        errors = "<br>".join(self.submissionErrors)
         return (
-            "Account was crawled. Details in /app/data/crawl <br>" +
-            "Duration =  " + str(self.duration) + 
+            "Account was crawled. Details in /app/data/logs/crawl <br>" +
+            "Duration =  " + str(self.duration) +
             " minutes" +
-            "<br> New Articles = " + str(self.totalNewArticles) + 
+            "<br> New Articles = " + str(self.totalNewArticles) +
                 "<Br> Page Count " + str(self.pageCount) +
-    "<Br> Total Toots " + str(len(self.context)) )
+    "<Br> Total Toots " + str(len(self.context)) +
+    "<Br> Errors: <br>" + errors )
                
     """
     def debug(self,pageOfToots):

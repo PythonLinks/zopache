@@ -55,9 +55,11 @@ class CkScripts(object):
   
     def  footerScripts(self):
         return """
- <script > 
-CKEDITOR.replace('form-field-source',
-       {disableNativeSpellChecker : false}); 
+<script>
+CKEDITOR.replace('form-field-source', {
+    disableNativeSpellChecker: false,
+    versionCheck: false
+});
 </script>
         """ 
 

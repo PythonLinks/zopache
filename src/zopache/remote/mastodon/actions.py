@@ -72,9 +72,10 @@ class BaseAction(Action):
             principalFolder [person.__name__] = person
             principalFolder.loginUser(person,form)            
             person.postAddProcess(view = form)
-            newURL = (form.getSecureLongURL (
-                   context = form.getPrincipal())
-                  + '/address')
+            #newURL = (form.getSecureLongURL (
+            #       context = form.getPrincipal())
+            #      + '/address')
+            newURL = '/' + self.form.getSiteRoot().homePage             
             logger.debug("Created %s", person.email)
             raise HTTPFound(newURL)
 

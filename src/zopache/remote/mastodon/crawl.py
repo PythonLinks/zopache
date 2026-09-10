@@ -1,9 +1,9 @@
 from zopache.core.view import View
 from zopache.core.viewdecorators import *
-from zopache.pages.interfaces import ICategory
+from dolmen.container import IBTreeContainer
 
 @view_component
-@context(ICategory)
+@context(IBTreeContainer)
 @target(IView)
 @name("crawl")
 @permissions('Manage')

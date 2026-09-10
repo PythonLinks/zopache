@@ -11,7 +11,7 @@ TIMEOUT = 7
 logger = logging.getLogger("oauth")
 
 class MastodonBot (object):
-    SCOPES = ['read:accounts','write:media','write:statuses']
+    SCOPES = ['read:accounts','read:statuses','write:media','write:statuses']
 
     def getOauthServer(self):
         path = self.request.url.split('?')[0]

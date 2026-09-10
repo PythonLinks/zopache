@@ -81,9 +81,8 @@ async def fetch(session,node,view):
                                     node.title, duration, url)
           return FAILURE, node, "TIME OUT: "  + str(duration) + 's ' + url
           
-   except:
+   except Exception as e:
           frameinfo = getframeinfo(currentframe())
-          e = sys.exc_info()[0]
           if isFeed:
              rss_error_logger.info("%s: %s %s", node.title, str(e), url)
           return (FAILURE,
