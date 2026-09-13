@@ -110,7 +110,7 @@ class BaseAction(Action):
 
 class MastodonCallBackAction(BaseAction):
     def getUserInfo(self,authorizationCode):
-        accessToken , result = self.getAccessToken(authorizationCode)
+        accessToken , result = self.form.getAccessToken(authorizationCode)
         if result == FAILURE:
             return '','', FAILURE
         userName, result = self.form.getNewUserName(accessToken)
@@ -118,11 +118,6 @@ class MastodonCallBackAction(BaseAction):
             return '','', FAILURE
         return  userName, accessToken, SUCCESS
 
-    
-    def getAccessToken(self,code):
-        return self.form.getAccessToken(code)
-    
-        
 class GithubCallBackAction(BaseAction):
     def getUserInfo(self,authorizationCode):
         accessToken, result = self.getAccessToken(authorizationCode)

@@ -46,6 +46,12 @@ class MastodonBot (object):
             accessToken = app.log_in( code = code ,
                     scopes = self.SCOPES,
                     redirect_uri= self.callbackURL())
+            if accessToken is None:
+                raise ValueError("Access Token is None.")
+            if not isinstance(accessToken, str):
+                raise ValueError("Access Token is not a string.")
+            if len(accessToken) < 5:
+                raise ValueError("Access Token is too short.")
         except Exception as error:
             msg = "while trying to get the Access Token "
             msg +=  "there was a problem. "
@@ -68,7 +74,13 @@ class MastodonBot (object):
                          access_token = accessToken)
         try:
             userInfo = proxy.me()
-            userName = userInfo["username"]        
+            userName = userInfo["username"]
+            if userName is None:
+                raise ValueError("User name is None.")
+            if not isinstance(userName, str):
+                raise ValueError("User name is not a string.")
+            if len(userName) < 2:
+                raise ValueError("User name is too short.")
             return  userName, SUCCESS
         except Exception as error:
             msg = "while trying to get the User Info"
