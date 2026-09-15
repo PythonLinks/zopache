@@ -72,10 +72,10 @@ class BaseAction(Action):
             principalFolder [person.__name__] = person
             principalFolder.loginUser(person,form)            
             person.postAddProcess(view = form)
-            #newURL = (form.getSecureLongURL (
-            #       context = form.getPrincipal())
-            #      + '/address')
-            newURL = '/' + self.form.getSiteRoot().homePage             
+            newURL = (form.getSecureLongURL (
+                   context = form.getPrincipal())
+                  + '/address')
+            #newURL = '/' + self.form.getSiteRoot().homePage             
             logger.debug("Created %s", person.email)
             raise HTTPFound(newURL)
 
@@ -89,22 +89,19 @@ class BaseAction(Action):
                  and returnedState is not None
                  and hmac.compare_digest(expectedState, returnedState))
         if not valid:
-            logger.debug("Oauth state mismatch")
-            form.sendMessage("OAuth state mismatch.", type = "Error")
+            message = "Oauth state mismatch.  Maybe the approval timed out. "
+            logger.debug(message)
+            form.sendMessage(message, type = "Error")
             newURL = "/person/oauth?domain= " + form.getDomain()
             raise HTTPFound(newURL)
 
     def getOauthCode(self):
-        code = self.form.request.form['code']
-        try:
-           if len(code) == 0:
-               raise Exception("Empty access token returned by Masotdon")
-        except Exception as error:
-            msg = "while trying to get the access code "
-            msg +=  "an empty access token was returned. "
-            msg += str(error)
+        code = self.form.request.form.get('code', '')
+        if not code:
+            error = self.form.request.form.get('error', 'unknown_error')
+            msg = "OAuth authorization was not granted (%s)." % error
             logger.debug(msg)
-            self.form.sendMessage (msg, type = "Error")
+            self.form.sendMessage(msg, type = "Error")
             return '', FAILURE
         return code, SUCCESS
 

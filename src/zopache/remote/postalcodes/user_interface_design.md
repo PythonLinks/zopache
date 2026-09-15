@@ -40,13 +40,15 @@ non-blank) x (error shown or not).
 | S3 | set | non-blank | no | Postal code confirmed valid for this country. Ready to submit. |
 | S4 | set | non-blank | **yes** | Postal code typed but does not resolve for this country. Must block submission. |
 
-There is no state with `countryCode` blank and an error shown, on the
-*live* validation path (`lookupPostalCode`): without a country there
-is nothing to validate against, so it must not run at all — it only
-ever clears a leftover error, never sets one, when `countryCode` is
-blank. (The revised submission gate below adds a separate
-submit-attempt check that *can* show a message in this state — see
-below.)
+There is no state with `countryCode` blank and an error shown caused
+by postal-code validation, on the *live* `lookupPostalCode` path:
+without a country there is nothing to validate against, so it must
+not run at all — it only ever clears a leftover error, never sets
+one, when `countryCode` is blank. Two other mechanisms can still show
+`#postalcode-error` while `countryCode` is blank: the submit-attempt
+check (see "Submission gate" below) and a country-search API failure
+(see "Country search fails" below) — neither is a postal-code
+validation state.
 
 ## Events / transitions
 
@@ -93,6 +95,35 @@ keystroke in S4 still passes the guard and re-runs the lookup — the
 user can correct a bad postal code without having to reselect the
 country.
 
+**Clear country** (`onCountryCleared`, fires on the Mapbox search
+box's `clear` event — deleting all text or clicking its "x" icon):
+- Clears `countryName` / `countryCode` only, plus any stale
+  `#postalcode-error`.
+- Does **not** clear `postalCode`. A postal code remains meaningful
+  data on its own even without a country selected — the same
+  asymmetry as never auto-clearing `countryCode` from the postal-code
+  side, just in the other direction. Only "pick a country" ever
+  re-validates an existing postal code; clearing the country never
+  discards one.
+- Lands in S0 (if `postalCode` was already blank) or S2 (if
+  `postalCode` was set) — the same S2 reached by typing a postal code
+  before picking any country.
+
+**Country search fails** (`onCountrySearchError`, fires on the Mapbox
+search box's `suggesterror` event — the suggestions API call itself
+failed, e.g. network/auth/rate-limit; distinct from "no country
+matched the query," which is not an error and fires `suggest` with an
+empty list instead):
+- Shows "Could not reach the country lookup service." in
+  `#postalcode-error`, via the same `showPostalCodeError` used by
+  postal-code lookup failures.
+- Does not touch `countryCode` or `postalCode`.
+- This is a second path, alongside the submit-attempt gate below,
+  where `#postalcode-error` can appear while `countryCode` is blank
+  on a *live* path. It doesn't add a new (countryCode, postalCode)
+  state — it's an infrastructure-failure signal reusing the same DOM
+  node, orthogonal to postal-code validation.
+
 ## Submission gate — revised after testing found it insufficient
 
 **Original design (flawed):** block submit only when
@@ -120,7 +151,8 @@ error). On the form's `submit` event:
   - S1 (country set, no postal code): "Please enter a postal code, or
     clear the selected country to skip location sharing."
   - S2 (postal code set, no country): "Please select a country to
-    validate this postal code, or clear it to skip location sharing."
+    validate this postal code, or clear the postal code to skip
+    location sharing."
   - S4: the lookup-failure message is already showing; leave it as is.
 
 This means `#postalcode-error` can now appear while `countryCode` is

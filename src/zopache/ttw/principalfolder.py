@@ -61,6 +61,8 @@ class InternalPrincipal(FileBase,Page):
     webClass = 'Person'
     gdprPermission = False
     title =''
+
+
     def secureParent(self):
         raise SecurityError('''You are not allowed to access attribute "secureParent" on %r %r ''' % (self.name,self.__class__.__name__))
     
@@ -244,8 +246,35 @@ class PrincipalFolder(Container):
     webClass = "PrincipalFolder"
     def __init__(self):
         super(PrincipalFolder, self).__init__()
+        self.initIndexes()
+
+
+    def __delitem__(self,key):
+        siteRoot = getPublicationRoot(self)
+        item = self[key]
+        siteRoot.unIndexItem(item)        
+        Container.__delitem__(self,key)
+        
+    def __setitem__(self,  key,item):
+        Container.__setitem__(self,key,item)
+        siteRoot = getPublicationRoot(self)        
+        siteRoot.indexItem(item)
+
+    def initIndexes(self):    
         self.idByEmail = OOBTree()
         self.idBySlugifiedHandle = OOBTree()
+
+    def indexPrincipal(self,item):
+        self.idByEmail[item.email] = item.__name__
+        slug = item.slugifiedHandle()
+        self.idBySlugifiedHandle[slug] = item.__name__
+
+    def unIndexPrincipal(self,item):
+        del self.idByEmail[item.email]
+        slug = item.slugifiedHandle()
+        del self.idBySlugifiedHandle[slug] 
+
+
 
     def getEveryone(self):
        siteRoot = self.__parent__
@@ -286,18 +315,6 @@ class PrincipalFolder(Container):
         all.sort(key=key, reverse = True)
         return all
     
-    def indexTree(self):
-        self.idByEmail = OOBTree()
-        self.idBySlugifiedHandle = OOBTree()                
-        for item in self.values():
-           if IInternalPrincipal.providedBy(item):  
-              try:
-                  self.idByEmail[item.email] = item.__name__
-                  slug = item.slugifiedHandle()
-                  self.idBySlugifiedHandle[slug] = item.__name__
-              except Exception as error:
-                  raise Exception (str(error))
-          
     def getPrincipalByUserName(self,userName, default = anonymous):
             id = self.getIdByEmail(userName)
             if id == None:
@@ -338,32 +355,6 @@ class PrincipalFolder(Container):
            
         handle = principal.slugifiedHandle()
         self.idBySlugifiedHandle[handle] = principal.__name__  
-
-    def __setitem__(self,key,principal):
-        if IInternalPrincipal.providedBy(principal):        
-           self.idByEmail[principal.email] = principal.__name__
-           slug = principal.slugifiedHandle()
-           self.idBySlugifiedHandle[slug] = principal.__name__        
-        root = getPublicationRoot(self)
-        root.addItem(principal)
-        BTreeContainer.__setitem__(self,key,principal)
-
-
-    def unindexPrincipal(self,principal):
-        del self.idByEmail[principal.email]
-        del self.idBySlugifiedHandle[principal.slugifiedHandle()]
-
-    #REALLY THIS IS DELETE USER    
-    def __delitem__(self,name):
-        principal = self[name]
-        if IInternalPrincipal.providedBy(principal):
-            self.unindexPrincipal(principal)
-        root = getPublicationRoot(self)
-        root.deleteItem(principal)
-        BTreeContainer.__delitem__(self,name)        
-
-    def removeItem(self,principal):
-        BTreeContainer.__delitem__(self,principal.__name__)
 
     def loginUser(self,user,form):
         session = getSession()

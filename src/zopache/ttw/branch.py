@@ -317,6 +317,9 @@ class Branch(SimpleBranch):
                 self.addTootedArticle(item)
                 self.contentByTime[importTime] = item
                 self.catalogContent(item,ancestorNames)
+
+            case 'InternalPrincipal':
+                self['person'].indexPrincipal(item)
                 
             case _ if IVideo.providedBy(item):
                self.contentByTime[ int(item.importTime)] = item
@@ -415,6 +418,10 @@ class Branch(SimpleBranch):
                    del self.tootedArticles[importTime]             
                 del self.contentByTime[int(item.importTime)]
                 self.unCatalogContent(item)
+
+            case 'InternalPrincipal':
+                self['person'].unIndexPrincipal(item)
+                
             case _ if IVideo.providedBy(item):
                 del self.contentByTime[int(item.importTime)]
                 self.unCatalogContent(item)

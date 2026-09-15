@@ -239,7 +239,6 @@ document.getElementById('form-action-Save').form.addEventListener('submit', chec
         if (countryCode == "") != (postalCode == ""):
             raise HTTPBadRequest(self.request.url)
 
-        return
         # Data looks good, get or create the postal container.
         postalContainer = self.getPostalContainer(root,
                                                   principal.countryCode,
@@ -253,10 +252,7 @@ document.getElementById('form-action-Save').form.addEventListener('submit', chec
         # Move the principal itself into the postal container.
         if principal.__parent__ is not postalContainer:
             name = principal.__name__
-            if principal.__parent__ is principalFolder:
-                principalFolder.removeItem(principal)
-            else:
-                del principal.__parent__[name]
+            del principal.__parent__[name]
             # Needed for indexing to work properly.     
             principal.__parent__ = postalContainer
             postalContainer[name] = principal
