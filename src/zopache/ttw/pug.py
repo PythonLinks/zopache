@@ -147,7 +147,7 @@ class PugBase(TrustedHTML,JavascriptBase):
     def postProcess(self,view=None):
         parent = self.__parent__
         if (IPugContainer.providedBy(parent)):
-            parent.mergeChildren()
+            parent.postProcess(view=view)
             
         TrustedHTML.postProcess(self,view)
         JavascriptBase.postProcess(self,view = view)
@@ -195,7 +195,7 @@ class PugContainer(PugBase, Container):
         html = self.html
         result = query.findall(html)
         for (string,arg) in result:
-            new = self[arg].html
+            new = self[arg].getHTML()
             html = html.replace(string,new,1)
         self.mergedHTML = html
                
