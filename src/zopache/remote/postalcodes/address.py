@@ -68,14 +68,15 @@ class EditAddress(BaseEditForm):
 var mapboxAccessToken = "{accessToken}";
 var postalCodeDebounceTimer;
 
-function createCountrySearchBox(fieldName) {{
-    var countryField = document.getElementById(fieldName);
+function createCountrySearchBox() {{
+    var countryField = document.getElementById('form-field-countryName');
     countryField.style.display = 'none';
     var searchBox = new mapboxsearch.MapboxSearchBox();
     searchBox.accessToken = mapboxAccessToken;
     searchBox.options = {{types: 'country'}};
     searchBox.addEventListener('retrieve', onCountrySelected);
     searchBox.addEventListener('clear', onCountryCleared);
+    searchBox.addEventListener('suggesterror', onCountrySearchError);
     countryField.after(searchBox);
     searchBox.value = countryField.value;
 }}
@@ -90,8 +91,11 @@ function onCountrySelected(event) {{
 function onCountryCleared() {{
     document.getElementById('form-field-countryName').value = '';
     document.getElementById('form-field-countryCode').value = '';
-    document.getElementById('form-field-postalCode').value = '';
     clearPostalCodeError();
+}}
+
+function onCountrySearchError(event) {{
+    showPostalCodeError("Could not reach the country lookup service.");
 }}
 
 function clearPostalCodeError() {{
@@ -112,15 +116,7 @@ function showPostalCodeError(message) {{
 function lookupPostalCode() {{
     var postalCode = document.getElementById('form-field-postalCode').value;
     var countryCode = document.getElementById('form-field-countryCode').value;
-    if (!postalCode) {{
-        clearPostalCodeError();
-        if (countryCode) {{
-            document.getElementById('form-field-countryCode').value = '';
-            document.getElementById('form-field-countryName').value = '';
-        }}
-        return;
-    }}
-    if (!countryCode) {{
+    if (!postalCode || !countryCode) {{
         clearPostalCodeError();
         return;
     }}
@@ -170,7 +166,7 @@ function checkSubmittable(event) {{
     if (!bothSet) {{
         if (!countryCode) {{
             showPostalCodeError("Please select a country to validate this postal "
-                + "code, or clear it to skip location sharing.");
+                + "code, or clear the postal code to skip location sharing.");
         }} else {{
             showPostalCodeError("Please enter a postal code, or clear the selected "
                 + "country to skip location sharing.");
@@ -185,7 +181,7 @@ function checkSubmittable(event) {{
         result = BaseEditForm.footerScripts(self)
         result += """
 <script>
-createCountrySearchBox('form-field-countryName');
+createCountrySearchBox();
 document.getElementById('form-field-postalCode').addEventListener('blur', lookupPostalCode);
 document.getElementById('form-field-postalCode').addEventListener('input', function() {
     clearTimeout(postalCodeDebounceTimer);

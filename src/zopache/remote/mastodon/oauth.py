@@ -72,8 +72,52 @@ class ChooseServer (Form):
     fields = Fields(IDomain)
     actions = Actions(CreateAndUse("Login"))
     fields["domain"].htmlAttributes = {"placeholder":
-               "e.g. example.social"}
+               "e.g. example.social or https://example.social"}
     def acquireTitle(self):
         return "Oauth Login"
+
+    def footerScripts(self):
+        result = Form.footerScripts(self)
+        result += """
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const domainField = document.getElementById('form-field-domain');
+  if (!domainField) return;
+
+  const form = domainField.closest('form');
+
+  function stripToDottedName() {
+    if (!domainField.value.trim()) return;
+
+    let value = domainField.value.trim().toLowerCase();
+
+    const hasScheme = /^https?:\\/\\//i.test(value);
+    const toParse = hasScheme ? value : `https://${value}`;
+
+    let host;
+    try {
+      host = new URL(toParse).hostname;
+    } catch {
+      host = value
+        .replace(/^https?:\\/\\//i, '')
+        .split(/[/?#]/)[0]
+        .split('@').pop()
+        .split(':')[0];
+    }
+
+    domainField.value = host.replace(/\\.$/, '');
+  }
+
+  // Clean on blur, so the user sees the normalized value before submitting
+  domainField.addEventListener('blur', stripToDottedName);
+
+  // Also clean on submit, in case blur never fired (e.g. autofill + Enter key)
+  if (form) {
+    form.addEventListener('submit', stripToDottedName);
+  }
+});
+</script>
+"""
+        return result
 
     
