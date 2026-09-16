@@ -64,6 +64,17 @@ class RemoteAccount(Source,
             raise Exception("No Possible times were found!")
 
 
+    def crawl(self,view):
+        proxy = view.proxy
+        account = self
+        accountName = account.mastodonId
+        user = proxy.account_search(accountName)[0]
+        logger.info ("\n---------------------------\n")
+        if self.crawledToStart == False: #first import
+               return self.crawlingToStart(view,proxy,user)
+        else:
+               return self.crawlingMostRecent(view,proxy,user)
+
 
     def crawlingToStart (self,view,proxy,user):        
         maxId = self.maxId
@@ -73,7 +84,7 @@ class RemoteAccount(Source,
         logger.info("Crawling To Start " + self.mastodonId)
         while pageOfToots and (proxy.ratelimit_remaining > 3):
                 pageOfToots = self.fetchAccountStatuses(
-                       view,proxy,user,'crawlingToStart',
+                       view, proxy, user, 'crawlingToStart',
                        maxId,limit=1000)
                 if len(pageOfToots) == 0:
                     self.crawledToStart = True
@@ -88,50 +99,6 @@ class RemoteAccount(Source,
                     maxId = self.setMaxId(maxId,lastToot.id)
         self.maxId = maxId            
         return totalNewArticles, pageCount
-    
-    def fetchAccountStatuses(self,view,proxy,user,method,maxId,**kwargs):
-        try:
-            return proxy.account_statuses(user.id, max_id=maxId, **kwargs)
-        except MastodonAPIError as error:
-            status_code = error.args[1] if len(error.args) > 1 else None
-            reason = error.args[2] if len(error.args) > 2 else None
-            error_msg = error.args[3] if len(error.args) > 3 else None
-            fetch_logger.error(
-                "account_statuses FAILED method=%s account=%s userId=%s "
-                "maxId=%s kwargs=%s ratelimit_remaining=%s "
-                "status=%s reason=%s error_msg=%s",
-                method, self.mastodonId, user.id, maxId, kwargs,
-                getattr(proxy,'ratelimit_remaining',None),
-                status_code, reason, error_msg)
-            raise
-        else:
-            fetch_logger.debug(
-                "account_statuses OK method=%s account=%s userId=%s "
-                "maxId=%s kwargs=%s ratelimit_remaining=%s",
-                method, self.mastodonId, user.id, maxId, kwargs,
-                getattr(proxy,'ratelimit_remaining',None))
-
-    def setMaxId(self, maxId,tootId):
-        if maxId == None:
-            return  tootId
-               
-        elif tootId <= maxId:
-            return  tootId
-
-        else:
-            raise Exception("Something strange with the Mastodon Ids. ")
-         
-    def crawl(self,view):
-        proxy = view.proxy
-        account = self
-        accountName = account.mastodonId
-        user = proxy.account_search(accountName)[0]
-        logger.info ("\n---------------------------\n")
-        if self.crawledToStart == False: #first import
-               return self.crawlingToStart(view,proxy,user)
-        else:
-               return self.crawlingMostRecent(view,proxy,user)
-
 
     def crawlingMostRecent(self,view,proxy,user):           
         totalNewArticles = 0
@@ -140,8 +107,7 @@ class RemoteAccount(Source,
         maxId = None
         existingToots = False
         startTime = view .startTime
-        lastLongImportTime = self.lastLongImportTime
-        longImportedTimeAgo = startTime - lastLongImportTime
+        longImportedTimeAgo = startTime - self.lastLongImportTime
         daysLongImportedAgo = longImportedTimeAgo/secondsInaDay
         longImport = daysLongImportedAgo > 6 
         logger.info ("Imported Ago " +
@@ -200,6 +166,39 @@ class RemoteAccount(Source,
                 
         logger.info ("oldestToot Age " + str(int(oldestTootAge)))
         return totalNewArticles, pageCount
+    
+    def fetchAccountStatuses(self,view,proxy,user,method,maxId,**kwargs):
+        try:
+            return proxy.account_statuses(user.id, max_id=maxId, **kwargs)
+        except MastodonAPIError as error:
+            status_code = error.args[1] if len(error.args) > 1 else None
+            reason = error.args[2] if len(error.args) > 2 else None
+            error_msg = error.args[3] if len(error.args) > 3 else None
+            fetch_logger.error(
+                "account_statuses FAILED method=%s account=%s userId=%s "
+                "maxId=%s kwargs=%s ratelimit_remaining=%s "
+                "status=%s reason=%s error_msg=%s",
+                method, self.mastodonId, user.id, maxId, kwargs,
+                getattr(proxy,'ratelimit_remaining',None),
+                status_code, reason, error_msg)
+            raise
+        else:
+            fetch_logger.debug(
+                "account_statuses OK method=%s account=%s userId=%s "
+                "maxId=%s kwargs=%s ratelimit_remaining=%s",
+                method, self.mastodonId, user.id, maxId, kwargs,
+                getattr(proxy,'ratelimit_remaining',None))
+
+    def setMaxId(self, maxId,tootId):
+        if maxId == None:
+            return  tootId
+               
+        elif tootId <= maxId:
+            return  tootId
+
+        else:
+            raise Exception("Something strange with the Mastodon Ids. ")
+         
 
     def processPage(self,pageOfToots,view):
         view.allToots=allToots = set()
