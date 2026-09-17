@@ -10,7 +10,6 @@ from zopache.remote.news.mastodonarticles import MastodonArticles
 from zopache.remote.mastodon.remoteaccount import RemoteAccount
 from zopache.core.baseform import Form
 
-
 regexp = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+')
 
 @view_component
@@ -34,14 +33,14 @@ class Reset(Form):
 @target(IView)
 @name("reset20")
 @permissions('Manage')
-class Reset2(Form):
+class Reset20(Form):
     title = "Reset the most recent toot id. "
     subtitle = "So you can crawl it again"
     
     def update(self):
         context = self.context
         context.mostRecentTootId = None
-        context.lastLongImport = time.time() - (3600 * 24 * 8)
+        context.lastLongImportTime = time.time() - (3600 * 24 * 8)
         all = context.valuesAsList()
         all = all [-20:]
         for item in all:
@@ -54,7 +53,7 @@ class Reset2(Form):
 @target(IView)
 @name("fetch")
 @permissions('Manage')
-class CrawlMastodon(Form,MastodonBot,RSSBase):
+class FetchTimeLine(Form,MastodonBot,RSSBase):
 
     #First the title
     @property
@@ -119,6 +118,7 @@ class CrawlMastodon(Form,MastodonBot,RSSBase):
     "<Br> Total Toots " + str(len(self.context)) +
     "<Br> Errors: <br>" + errors )
                
+
     """
     def debug(self,pageOfToots):
         from bs4 import BeautifulSoup

@@ -2,7 +2,7 @@ import sys
 import time
 import re
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, NavigableString
 from urllib.parse import urlparse
 
 from langdetect import detect
@@ -11,8 +11,6 @@ from langdetect.lang_detect_exception import LangDetectException
 from slugify import slugify
 
 from webpreview import web_preview
-
-from bs4 import BeautifulSoup
 
 from zope.interface import implementer
 
@@ -111,8 +109,8 @@ class Toot(Leaf):
             language = detect(text)
         except LangDetectException as e:
             return 'Language Error', self
-        if language != 'en':
-            return 'Not English', self
+        if language not in ('en', 'de'):
+            return 'Not English or German', self
 
         soup, textTags = self.removeHashTags(soup)
         soup, articleURLs = self.processURLs (soup)
@@ -198,6 +196,8 @@ class Toot(Leaf):
         lastWasHashTag = False
         contents = soup.contents
         for paragraph in contents:
+            if isinstance(paragraph, NavigableString):
+                continue
             for tag in paragraph:
                 #skip spaces
                 if not tag.text.strip():
@@ -226,7 +226,7 @@ class Toot(Leaf):
                    text = ' '.join(result)
                    tag.replace_with(text)
                                              
-        return soup,textTags
+        return soup, textTags
         
     def isHashTag(self,tag):
        try:

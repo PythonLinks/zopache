@@ -8,16 +8,14 @@ from mastodon import MastodonAPIError
 from dolmen.forms.base.markers import FAILURE
 from zopache.core.viewdecorators import *
 from zopache.remote.mastodon.toot import Toot
-from zopache.remote.mastodon.interfaces import IRemoteAccount
+from zopache.remote.mastodon.interfaces import IRemoteAccount, IHashTag
 from zopache.application.source import Source
 from zopache.remote.rssdownload import fetchAll
 from zopache.crud.getimage import getImage
 from zopache.remote.news.article import Article
 from zopache.core.transactionnote import TransactionNote
-from zopache.remote.mastodon.parseid import ParseMastodonId
 
 secondsInaDay = 3600 *24
-crawlBackSeconds = secondsInaDay * 5 # Days
 
 os.makedirs('/app/data/logs', exist_ok=True)
 logger = logging.getLogger(__name__)
@@ -30,11 +28,7 @@ fetch_logger.setLevel(logging.DEBUG)
 fetch_logger.addHandler(
     logging.FileHandler('/app/data/logs/fetchMastodon', mode = "a"))
 
-@implementer (IRemoteAccount)
-class RemoteAccount(Source,
-                    TransactionNote,
-                    ParseMastodonId):
-    
+class Base (Source, TransactionNote) :
     webClass = "RemoteAccount"
     htmlSummary = True
     webApproved = True
@@ -56,18 +50,16 @@ class RemoteAccount(Source,
          Source.__init__(self)
          self.reset()
 
-    def previousImportTime(self,time,view):
+    def previousImportTime(self,indexTime,view):
             while True:
-                time -= 1
-                if - time not in view.contentByTime:
-                    return time
-            raise Exception("No Possible times were found!")
+                indexTime -= 1
+                if - indexTime not in view.contentByTime:
+                    return indexTime
 
 
     def crawl(self,view):
         proxy = view.proxy
-        account = self
-        accountName = account.mastodonId
+        accountName = self.mastodonId
         user = proxy.account_search(accountName)[0]
         logger.info ("\n---------------------------\n")
         if self.crawledToStart == False: #first import
@@ -76,15 +68,15 @@ class RemoteAccount(Source,
                return self.crawlingMostRecent(view,proxy,user)
 
 
-    def crawlingToStart (self,view,proxy,user):        
+    def crawlingToStart (self,view,proxy,item):
         maxId = self.maxId
         pageOfToots = [None]
         pageCount = 0
         totalNewArticles = 0
         logger.info("Crawling To Start " + self.mastodonId)
         while pageOfToots and (proxy.ratelimit_remaining > 3):
-                pageOfToots = self.fetchAccountStatuses(
-                       view, proxy, user, 'crawlingToStart',
+                pageOfToots = self.fetchToots(
+                       view, proxy, item, 'crawlingToStart',
                        maxId,limit=1000)
                 if len(pageOfToots) == 0:
                     self.crawledToStart = True
@@ -100,56 +92,67 @@ class RemoteAccount(Source,
         self.maxId = maxId            
         return totalNewArticles, pageCount
 
-    def crawlingMostRecent(self,view,proxy,user):           
+    def isLongImport(self, startTime):
+        longImportedTimeAgo = startTime - self.lastLongImportTime
+        daysLongImportedAgo = longImportedTimeAgo/secondsInaDay
+        longImport = daysLongImportedAgo > 6
+        logger.info ("Imported Ago " +
+                             str(int(daysLongImportedAgo)))
+        if longImport == True:
+            self.lastLongImportTime = startTime
+            logger.info("Crawling Long Imports " +  self.mastodonId)
+        return longImport
+
+    def crawlingMostRecent(self,view,proxy,item):
+        maxId = None
+        startTime = view .startTime
+        longImport = self.isLongImport(startTime)
+        logger.info("Crawling Recent Toots " +  self.mastodonId)
+        pageOfToots = self.fetchToots(
+                              view,proxy,item,
+                              'crawlingMostRecent-initial',maxId)
+        # No Toots
+        if not pageOfToots:
+           logger.info("No Toots " + self.mastodonId)
+           return 0,0
+
+        #No new Toots
+        mostRecentTootId = pageOfToots [0].id
+        if mostRecentTootId == self.mostRecentTootId:
+           logger.info("No New Toots " + self.mastodonId)
+           return 0, 0
+
+        self.mostRecentTootId = mostRecentTootId
+        self.lastImported = startTime
+        self.modificationTime = startTime
+
+        totalNewArticles, pageCount, oldestTootAge = self.crawlPages(
+                              view,proxy,item,pageOfToots,longImport)
+        logger.info ("oldestToot Age " + str(int(oldestTootAge)))
+        return totalNewArticles, pageCount
+
+    def crawlPages(self,view,proxy,item,pageOfToots,longImport):
         totalNewArticles = 0
         oldestTootAge = 0
         pageCount = 0
         maxId = None
         existingToots = False
-        startTime = view .startTime
-        longImportedTimeAgo = startTime - self.lastLongImportTime
-        daysLongImportedAgo = longImportedTimeAgo/secondsInaDay
-        longImport = daysLongImportedAgo > 6 
-        logger.info ("Imported Ago " +
-                             str(int(daysLongImportedAgo)))
-        if longImport == True:
-            self.lastLongImportTime = startTime
-            logger.info("Crawling Long Imports " +  self.mastodonId)       
-        logger.info("Crawling Recent Toots " +  self.mastodonId)
-        pageOfToots = self.fetchAccountStatuses(
-                              view,proxy,user,
-                              'crawlingMostRecent-initial',maxId)
-        if (len (pageOfToots) > 0):
-            mostRecentTootId = pageOfToots [0].id                
-            done = mostRecentTootId == self.mostRecentTootId
-            if done:
-                logger.info("No New Toots " + self.mastodonId)
-                return 0, 0
-            else:
-                self.mostRecentTootId = mostRecentTootId
-        self.lastImported = startTime
-        self.modificationTime = startTime
-                
         while (pageOfToots and
                 (proxy.ratelimit_remaining > 3) ):
-              if len(pageOfToots) == 0:
-                  logger.warning("Stange, No Toots were returned ",
-                          self.mastodonId)
-                  break
 
               if (existingToots and
-                  not longImport and 
+                  not longImport and
                   (oldestTootAge > 1)):
                   logger.debug("Break: Only crawling for a day " +
-                                 self.mastodonId) 
+                                 self.mastodonId)
                   break
-                       
+
               if (existingToots and
                   longImport and
                   (oldestTootAge > 6)):
                   logger.debug("Break: Crawled For 6 days  " +
-                                 self.mastodonId) 
-                  break                  
+                                 self.mastodonId)
+                  break
 
               existingToots, newArticles = (
                       self.processPage(pageOfToots,view))
@@ -160,34 +163,44 @@ class RemoteAccount(Source,
               maxId = self.setMaxId(maxId,lastToot.id)
               oldestTootAge = self.tootAge(lastToot,view)
               print ("Age = ", oldestTootAge," days", end = "")
-              pageOfToots = proxy.account_statuses(
-                              user.id,
-                              max_id = maxId)
-                
-        logger.info ("oldestToot Age " + str(int(oldestTootAge)))
-        return totalNewArticles, pageCount
-    
-    def fetchAccountStatuses(self,view,proxy,user,method,maxId,**kwargs):
+              pageOfToots = self.fetchToots(
+                              view, proxy, item, 'crawlPages', maxId)
+
+        return totalNewArticles, pageCount, oldestTootAge
+
+
+    def fetchToots(self,view,proxy,item,method,maxId,**kwargs):
+        user = item
         try:
-            return proxy.account_statuses(user.id, max_id=maxId, **kwargs)
+            result = proxy.account_statuses(user.id, max_id=maxId, **kwargs)
+            self.logFetchSuccess(
+                "account_statuses", method, user.id, maxId, kwargs, proxy)
+            return result
         except MastodonAPIError as error:
-            status_code = error.args[1] if len(error.args) > 1 else None
-            reason = error.args[2] if len(error.args) > 2 else None
-            error_msg = error.args[3] if len(error.args) > 3 else None
-            fetch_logger.error(
-                "account_statuses FAILED method=%s account=%s userId=%s "
-                "maxId=%s kwargs=%s ratelimit_remaining=%s "
-                "status=%s reason=%s error_msg=%s",
-                method, self.mastodonId, user.id, maxId, kwargs,
-                getattr(proxy,'ratelimit_remaining',None),
-                status_code, reason, error_msg)
+            self.logFetchFailure(
+                "account_statuses", error, method, user.id, maxId, kwargs,
+                proxy)
             raise
-        else:
-            fetch_logger.debug(
-                "account_statuses OK method=%s account=%s userId=%s "
-                "maxId=%s kwargs=%s ratelimit_remaining=%s",
-                method, self.mastodonId, user.id, maxId, kwargs,
-                getattr(proxy,'ratelimit_remaining',None))
+
+    def logFetchSuccess(self, apiName, method, itemId, maxId, kwargs, proxy):
+        fetch_logger.debug(
+            "%s OK method=%s account=%s userId=%s "
+            "maxId=%s kwargs=%s ratelimit_remaining=%s",
+            apiName, method, self.mastodonId, itemId, maxId, kwargs,
+            getattr(proxy,'ratelimit_remaining',None))
+
+    def logFetchFailure(self, apiName, error, method, itemId, maxId, kwargs,
+                         proxy):
+        status_code = error.args[1] if len(error.args) > 1 else None
+        reason = error.args[2] if len(error.args) > 2 else None
+        error_msg = error.args[3] if len(error.args) > 3 else None
+        fetch_logger.error(
+            "%s FAILED method=%s account=%s userId=%s "
+            "maxId=%s kwargs=%s ratelimit_remaining=%s "
+            "status=%s reason=%s error_msg=%s",
+            apiName, method, self.mastodonId, itemId, maxId, kwargs,
+            getattr(proxy,'ratelimit_remaining',None),
+            status_code, reason, error_msg)
 
     def setMaxId(self, maxId,tootId):
         if maxId == None:
@@ -282,11 +295,6 @@ class RemoteAccount(Source,
         for toot in pageOfToots:
            account = self
            message, new  = Toot().createToot(toot,account)
-           #logger.info (message)
-           #try:
-           #   print (message, new.title)
-           #except:
-           #   print (message)
            if message == "Existing Toot":
               existingToots = True
            if message != "SUCCESS":
@@ -336,9 +344,52 @@ class RemoteAccount(Source,
         if self.logoURL:
             getImage(self,self.logoURL)
 
+@implementer (IRemoteAccount)
+class RemoteAccount( Base):
 
-class MastodonAccount(RemoteAccount):
-    pass
+    @property
+    def remoteURL(self):
+        blank,user, server = self.parts()
+        return 'https://' + server + '/@' + user
+
+    def getLink(self):
+        return f'<a href ="{self.remoteURL}">{self.userName()}</a>'
+        
+    def parts(self):
+        id = self.mastodonId
+        if id[0]!='@':
+            id = '@' + id
+        return id.split('@')
+
+    def userName(self):
+        return "@" + self.parts()[1]
+    
+            
+@implementer (IHashTag)
+class HashTag(Base):
+    #This crawl looks like the inherited crawl,
+    #But soon it will not require a logged in user.
+    #So it is staying separate.
+    def crawl(self,view):
+        proxy = view.proxy
+        hashTag = self.mastodonId.lstrip("#")
+        logger.info ("\n---------------------------\n")
+        if self.crawledToStart == False: #first import
+               return self.crawlingToStart(view,proxy,hashTag)
+        else:
+               return self.crawlingMostRecent(view,proxy,hashTag)
+
+    def fetchToots(self,view,proxy,item,method,maxId,**kwargs):
+        hashTag = item
+        try:
+            result = proxy.timeline_hashtag(hashTag, max_id=maxId, **kwargs)
+            self.logFetchSuccess(
+                "hash tag", method, hashTag, maxId, kwargs, proxy)
+            return result
+        except MastodonAPIError as error:
+            self.logFetchFailure(
+                "hash tag", error, method, hashTag, maxId, kwargs, proxy)
+            raise
 
 import crom
 from zopache.zmi.interfaces import IURLSegment

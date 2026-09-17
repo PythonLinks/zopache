@@ -5,11 +5,14 @@ from zopache.core.interfaces import ITreeSecurity
 from zopache.core.viewdecorators import *
 from zopache.pages.interfaces import IPageBase
 from zopache.remote.mastodon.interfaces import IAddRemoteAccount
+from zopache.remote.mastodon.interfaces import IAddHashTag
 from zopache.remote.mastodon.remoteaccount import RemoteAccount
+from zopache.remote.mastodon.remoteaccount import HashTag
 from zopache.ttw.mail import Notify
 from zopache.business.exists import Duplicate
 from zopache.ttw.htmlviews import AddCkHTMLBase
 from zopache.pages.addpage import AddByTitleForm
+
 
 @view_component
 @name ('addTimeline')
@@ -25,9 +28,19 @@ class AddRemoteAccount(AddByTitleForm):
      dataValidators = [Duplicate]
      def newName(self,data):
          return data['mastodonId'].strip()
-     
+
      def newURL(self,baseURL):
-        return baseURL 
+        return baseURL
+
+@view_component
+@name ('addHashTag')
+@target(IView)
+@context(IPageBase)
+class AddHashTag(AddRemoteAccount):
+     interface = IAddHashTag
+     title = "Add a HashTag"
+     subTitle ="Ask the admin to fetch the content"
+     factory = HashTag
 
 
 
