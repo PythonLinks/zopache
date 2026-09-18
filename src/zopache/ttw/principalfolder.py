@@ -214,20 +214,16 @@ class InternalPrincipal(FileBase,Page):
         return f"https://{domain}"
 
     @property
-    def mastodonProfileURL (self):
+    def remoteProfileURL (self):
         handle = self.handle.lstrip('@')
         try:
             username, domain = handle.split('@', 1)
         except ValueError:
-            raise ValueError(
-                f"Invalid Mastodon ID format: {self.handle!r}. "
-                "Expected '@username@domain' or 'username@domain'."
-            )
-        
-        return f"https://{domain}/@{username}"    
-
-
-
+            return ""
+        if domain == "github.com":
+            return f"https://{domain}/{username}"
+        else:
+            return f"https://{domain}/@{username}"
 
 def key(item):
     return item._p_mtime
