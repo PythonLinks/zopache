@@ -1,6 +1,7 @@
 from zopache.core.view import View
 from zopache.core.viewdecorators import *
 from dolmen.container import IBTreeContainer
+from zopache.remote.mastodon.fetch import FetchTimeLine
 
 @view_component
 @context(IBTreeContainer)
@@ -23,7 +24,7 @@ class CrawlMastodon(View):
         feeds.sort(key=lambda feed: feed.lastImported)
         result = ""
         for item in feeds:
-            result += Fetch(self.context,self.request)().render()
+            result += FetchTimeLine(self.context,self.request)().render()
 
         self.status = result    
             

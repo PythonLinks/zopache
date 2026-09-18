@@ -15,8 +15,9 @@ class RegionBase(MapBase):
     showChildren = True
     webClass = "Region"
     remoteURL = ""
-    latitude = 51
-    longitude = 0
+    latitude = 30
+    longitude = -15
+    
     def redundantRemoteURL(self):
         return ""
 
