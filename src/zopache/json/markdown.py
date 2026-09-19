@@ -40,6 +40,11 @@ class JSONMarkdown(BasicProperties, Tootable, PageVeryBase, Ancestors):
         return json['data']['content']
 
     @property
+    def remoteURL(self):
+        json = self.json
+        return json['data'].get('remoteURL','')    
+
+    @property
     def importTime(self):
         return self.creationTime
     

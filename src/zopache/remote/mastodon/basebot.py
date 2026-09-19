@@ -6,7 +6,8 @@ from dolmen.forms.base.markers import FAILURE, SUCCESS
 from cromlech.security import unauthenticated_principal as anonymous
 from cromlech.browser.exceptions import HTTPFound
 
-TIMEOUT = 7
+LOGIN_TIMEOUT = 7
+FETCH_TIMEOUT = 60
 
 logger = logging.getLogger("oauth")
 
@@ -37,7 +38,7 @@ class MastodonBot (object):
     def createOauthApp(self):
         oauthServer = self.getOauthServer()
         app = Mastodon(client_id = self.getSecretFile(oauthServer),
-                       request_timeout = TIMEOUT)
+                       request_timeout = LOGIN_TIMEOUT)
         return app
 
     def getAccessToken(self,code):
@@ -69,7 +70,7 @@ class MastodonBot (object):
     #Only to be used in ./mauth
     def getNewUserName(self,accessToken):
         oauthServer = self.getOauthServer()        
-        proxy =  Mastodon (request_timeout = TIMEOUT,
+        proxy =  Mastodon (request_timeout = LOGIN_TIMEOUT,
                          api_base_url = "https://" + oauthServer,
                          access_token = accessToken)
         try:
@@ -100,7 +101,7 @@ class MastodonBot (object):
         accessToken = principal.accessToken
         if not accessToken:
             self.oauth()
-        proxy =  Mastodon (request_timeout = TIMEOUT,
+        proxy =  Mastodon (request_timeout = FETCH_TIMEOUT,
                          api_base_url=principal.mastodonServerURL,
                          access_token = accessToken)
         return proxy

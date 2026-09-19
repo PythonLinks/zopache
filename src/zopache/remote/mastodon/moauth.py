@@ -13,7 +13,7 @@ from cromlech.browser.exceptions import HTTPFound
 from zopache.core.viewdecorators import *
 from zopache.core.baseform import Form
 from zopache.ttw.interfaces import IPrincipalFolder
-from zopache.remote.mastodon.basebot import MastodonBot, TIMEOUT
+from zopache.remote.mastodon.basebot import MastodonBot, LOGIN_TIMEOUT
 
 logger = logging.getLogger("oauth")
 
@@ -70,7 +70,7 @@ class MastodonOauth(Form, MastodonBot):
                     api_base_url = mastodonDomain,
                     redirect_uris = self.callbackURL(),
                     scopes = self.SCOPES,
-                    request_timeout = TIMEOUT,
+                    request_timeout = LOGIN_TIMEOUT,
                     to_file = str(secretFile)
                     )
                 # Is this really necessary

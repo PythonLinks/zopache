@@ -69,7 +69,6 @@ class Base (Source, TransactionNote) :
 
 
     def crawlingToStart (self,view,proxy,item):
-        maxId = self.maxId
         pageOfToots = [None]
         pageCount = 0
         totalNewArticles = 0
@@ -77,19 +76,20 @@ class Base (Source, TransactionNote) :
         while pageOfToots and (proxy.ratelimit_remaining > 3):
                 pageOfToots = self.fetchToots(
                        view, proxy, item, 'crawlingToStart',
-                       maxId,limit=1000)
+                       self.maxId,limit=1000)
                 if len(pageOfToots) == 0:
                     self.crawledToStart = True
                     logger.info ("Crawled To Start" +  self.mastodonId)
                     break
                 else:
+                    #set the resume cursor before processing the page,
+                    #so it commits atomically with this page's data
+                    lastToot = pageOfToots [-1]
+                    self.maxId = self.setMaxId(self.maxId,lastToot.id)
                     existingToots, newArticles = (
                       self.processPage(pageOfToots,view))
                     totalNewArticles += newArticles
                     pageCount += 1
-                    lastToot = pageOfToots [-1]
-                    maxId = self.setMaxId(maxId,lastToot.id)
-        self.maxId = maxId            
         return totalNewArticles, pageCount
 
     def isLongImport(self, startTime):
@@ -183,6 +183,7 @@ class Base (Source, TransactionNote) :
             raise
 
     def logFetchSuccess(self, apiName, method, itemId, maxId, kwargs, proxy):
+        return
         fetch_logger.debug(
             "%s OK method=%s account=%s userId=%s "
             "maxId=%s kwargs=%s ratelimit_remaining=%s",
@@ -295,6 +296,9 @@ class Base (Source, TransactionNote) :
         for toot in pageOfToots:
            account = self
            message, new  = Toot().createToot(toot,account)
+           #DEBUG: temporary, remove once the missing-articles bug is found
+           logger.debug("createToot result: " + message +
+                         " tootId=" + str(toot.id))
            if message == "Existing Toot":
               existingToots = True
            if message != "SUCCESS":

@@ -2,6 +2,8 @@ import logging
 import re
 import time
 
+from mastodon import MastodonError
+
 from zopache.core.viewdecorators import *
 from zopache.remote.mastodon.basebot import MastodonBot
 from zopache.remote.mastodon.interfaces import IRemoteAccount
@@ -98,10 +100,17 @@ class FetchTimeLine(Form,MastodonBot,RSSBase):
             self.mastodonArticles = MastodonArticles()
             self.root['mastodon-articles'] = self.mastodonArticles
 
-        totalNewArticles, pageCount = account.crawl(self)
+        try:
+            totalNewArticles, pageCount = account.crawl(self)
+        except MastodonError as error:
+            self.submissionErrors.append(
+                "MASTODON ERROR: " + str(error))
+            totalNewArticles, pageCount = 0, 0
         logging.debug("Pages,Articles" + account.mastodonId +
                       str(pageCount) + " " + str ( totalNewArticles))
         self.totalNewArticles = totalNewArticles
+        if totalNewArticles:
+            self.getSiteRoot().lastMastodonFetchTime = time.time()        
         self.pageCount = pageCount
         Form.update(self)
         
