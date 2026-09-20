@@ -30,6 +30,8 @@ from zopache.ttw.interfaces import (ISource,
                                     IIndexHTML,
                                     IAceHTMLPage)
 from zopache.ttw.addeditforms import TreeSecurityAddForm, AceEditForm
+from zopache.ttw.mixin import Mixin
+
 
 from zopache.ttw.html import (HTML,
                               HTMLRecursionError,
@@ -119,7 +121,7 @@ class AddAceHTML (AddAceHTMLBase):
 @view_component
 @name('index')
 @context(IIndexHTML)
-class Index(View,Breadcrumbs):
+class Index(View,Breadcrumbs, Mixin):
     count=0
     responseFactory = Response
     make_response = make_view_response
@@ -151,7 +153,7 @@ class Index(View,Breadcrumbs):
 @view_component
 @name('index')
 @context(IAceHTMLClass)
-class AceObjectIndex(Index,Breadcrumbs):           
+class AceObjectIndex(Index):           
     def render(self):
 
         content = Index.render(self)

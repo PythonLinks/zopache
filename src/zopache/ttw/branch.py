@@ -359,7 +359,7 @@ class Branch(SimpleBranch):
         result = self.contentCatalog['importTime'].apply((-importTime,-importTime))
         return len(result) 
     
-    def unIndexItem(self,item, itemType=IPage):
+    def unIndexItem(self,item, itemType=ICanonical):
         if not IPageBase.providedBy(item):
             return
         
