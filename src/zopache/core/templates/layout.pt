@@ -7,13 +7,20 @@
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta charset="utf-8" />
     <title>${view.acquireTitle() + ' ' + view.subTitle}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               interactive-widget=resizes-content">
     <meta name="description" content="" />
     <meta name="author" content="" />
     <style>
       .navbar {
       padding-bottom:0px;
       margin-bottom:0px;      
+      }
+      @media (max-width: 767px) {
+          body {
+           padding-bottom: 50vh;
+           }
       }
       #footer {
           color: white;

@@ -6,8 +6,18 @@
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
     <meta charset="utf-8" />
     <title>${view.title}</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport"
+      content="width=device-width, initial-scale=1.0,
+               interactive-widget=resizes-content"  >
+    
     <meta name="description" content="" />
+    <style>
+      @media (max-width: 767px) {
+          body {
+           padding-bottom: 50vh;
+           }
+      }
+    </style>  
   </head>
   <body class="bg-light" tal:define= "pug view.layoutAcquire('navbar.py') ">
     ${structure:  pug(view, pug = pug)}
