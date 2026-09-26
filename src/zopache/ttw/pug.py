@@ -137,6 +137,7 @@ class PugBase(TrustedHTML,JavascriptBase):
     icon="ttwicons/Pug.svg"    
     source =defaultPug
     html = defaultHTML
+    mergedHTML = ""
     title=u''
     className='Pug'
     sideBySide = True
