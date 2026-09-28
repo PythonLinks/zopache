@@ -66,12 +66,6 @@ class BaseArticle(NewsMixIn,Page,Tootable):
     def getCategory(self):
       return self._category
 
-    def moveTo(self,category):
-              name = self.__name__
-              del self.__parent__[name]
-              category [name] = self
-              self.__name__ = name
-  
     def setImportTime(self,publishedAt,root):
         importTime = int(publishedAt)
 

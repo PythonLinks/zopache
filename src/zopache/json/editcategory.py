@@ -6,7 +6,7 @@ from zopache.business.jsonschemavalidator import JSONSchemaValidator
 from zopache.business.exists import DuplicateOrganization
 
 @form_component
-@name ('ckedit')
+@name ('edit')
 @context(ICategory)
 @implementer(ITreeSecurity)
 class EditFeaturedContent(EditJson):

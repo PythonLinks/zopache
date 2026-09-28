@@ -56,7 +56,7 @@ class BaseAction(Action):
             person = principalFolder.getPrincipalById(personId)
             person.accessToken = accessToken
             principalFolder.loginUser(person,form)
-            newURL = '/' + self.form.getSiteRoot().homePage 
+            newURL = '/' + self.form.getSiteRoot().homePage + self.form.randomIndex()
             logger.debug("Logged in: %s", person.email)
             raise HTTPFound(newURL)
         else:

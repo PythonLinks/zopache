@@ -44,7 +44,6 @@ class Parents(object):
               return item.__getattr__(method)
        raise Exception("NO SUCH METHOD FOUND")
 
-
     def reversedParentsUpTo(self,item,anInterface):
         parents=[]
         while (item!=None):
@@ -54,6 +53,25 @@ class Parents(object):
            item=item.__parent__      
         return parents
 
+    def reversedParentsUpToSiteRoot(self,item):
+        return self.reversedParentsUpTo(item,IPublicationRoot)
+
+    def parentsUpToSiteRoot(self,item=None):
+        if item ==None:
+           item = self.context 
+        parents = self.reversedParentsUpToSiteRoot(item)
+        parents.reverse()
+        return parents
+    
+    def reversedParentsUpToZodbRoot(self,item):
+        return self.reversedParentsUpTo(item,IZodbRoot)    
+
+    def parentsUpToZodbRoot(self, item = None):
+        if item ==None:
+           item = self.context         
+        parents = self.reversedParentsUpToZodbRoot(item)
+        parents.reverse()
+        return parents
 
     def parentsUpToSubDomain(self,item):
         domain = self.getDomain()
@@ -74,25 +92,7 @@ class Parents(object):
         return parents
 
 
-    def parentsUpToSiteRoot(self,item=None):
-        if item ==None:
-           item = self.context 
-        parents = self.reversedParentsUpToSiteRoot(item)
-        return parents
-    
-    def parentsUpToZodbRoot(self, item = None):
-        if item ==None:
-           item = self.context         
-        parents = self.reversedParentsUpToZodbRoot(item)
-        parents.reverse()
-        return parents
-    
-    def reversedParentsUpToSiteRoot(self,item):
-        return self.reversedParentsUpTo(item,IPublicationRoot)
 
-    def reversedParentsUpToZodbRoot(self,item):
-        return self.reversedParentsUpTo(item,IZodbRoot)    
-        
     def parentsWhichImplement(self,interface):
            item=self.context
            result=[]

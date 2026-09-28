@@ -206,8 +206,8 @@ class Base (Source, TransactionNote) :
     def setMaxId(self, maxId,tootId):
         if maxId == None:
             return  tootId
-               
-        elif tootId <= maxId:
+
+        elif int(tootId) <= int(maxId):
             return  tootId
 
         else:

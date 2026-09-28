@@ -46,7 +46,7 @@ class EditAddress(BaseEditForm):
 
     def newURL(self,new):
         root = self.getSiteRoot()
-        newURL =   root.homePage #+ self.randomIndex() 
+        newURL =   root.homePage + self.randomIndex()
         raise HTTPFound(newURL)
     
     def addUnAuthorizedActions(self):

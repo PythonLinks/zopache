@@ -5,7 +5,6 @@ import time
 import sys
 import os
 import logging
-from inspect import currentframe, getframeinfo
 
 from dolmen.forms.base.markers import FAILURE, SUCCESS
 from zopache.remote.irss import IJustRSS, IRSSArticle
@@ -82,17 +81,10 @@ async def fetch(session,node,view):
           return FAILURE, node, "TIME OUT: "  + str(duration) + 's ' + url
           
    except Exception as e:
-          frameinfo = getframeinfo(currentframe())
           if isFeed:
              rss_error_logger.info("%s: %s %s", node.title, str(e), url)
-          return (FAILURE,
-                  (frameinfo.filename + ' ' +
-                  str(frameinfo.lineno) + ' ' +
-                   str(e)),
-                  node
-                  )
-          return FAILURE, node ,  (" IN RSSDownload " +
-                                   str(e) + ' ' + url) 
+          return FAILURE, node, (" IN RSSDownload " +
+                                  str(e) + ' ' + url)
 
 def fetchAll(nodes,view,allowedTime = 120):
     loop = asyncio.new_event_loop()

@@ -36,6 +36,8 @@ class NewsMixIn(object):
             return result
     
     def getDescriptionFor(self,view):
+        if self.description:
+            return self.description
         for toot in self.toots:
             if len (toot.content) > 10:
                 return toot.content

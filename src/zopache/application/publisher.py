@@ -103,7 +103,6 @@ class Publisher (DawnlightPublisher):
                 response.status_int = status
 
             content_type = response.headers['content-type']
-            origin = request.headers.get('Origin')
 
             if status != 200:
                 #Never let an error response (eg. not-found) be cached
@@ -111,27 +110,43 @@ class Publisher (DawnlightPublisher):
                 response.headers['cache-control'] = "no-store"
             elif 'image' in content_type: #A Month
                 response.headers['cache-control'] = "public, max-age=2592000"
-            elif (('javascript' in content_type or 'json' in content_type)
-                  and origin in CORS_ALLOWED_ORIGINS):
-                response.headers['access-control-allow-origin'] = origin
-                response.headers['access-control-allow-methods'] = "GET"
-                response.headers['cache-control'] = "no-store"
-            elif request.principal != anonymous:
-                response.headers['cache-control'] = "no-store"
-            elif 'javascript' in content_type:
+            elif hasattr(view,"isDeveloper") and view.isDeveloper():
+                response.headers['cache-control'] = "no-store"                
+            elif 'html' in content_type:
+                if (request.principal != anonymous):
+                    response.headers['cache-control'] = "no-store"
+                else:
+                    response.headers['cache-control'] = "public, max-age=3600"
+            elif 'javascript' in content_type:                
                 response.headers['cache-control'] = "public, max-age=86400"
             elif 'json' in content_type:
+                if (request.principal != anonymous): 
+                    response.headers['cache-control'] = "no-store"
+                else:
+                    response.headers['cache-control'] = "public, max-age=86400"
+            else: # Includes CSS 
                 response.headers['cache-control'] = "public, max-age=86400"
-            else:
-                response.headers['cache-control'] = "public, max-age=3600"
 
-
+            origin = request.headers.get('Origin')
+            if origin: # A CORS REQUEST
+              originDomain = origin.split("://")
+              if len (originDomain) > 1:
+                  originDomain = originDomain [1]
+              else:    
+                  originDomain = None
+              if view.getDomain() !=originDomain:    
+                 if (('javascript' in content_type or
+                      'json' in content_type)
+                      and originDomain in CORS_ALLOWED_DOMAINS):
+                     response.headers['access-control-allow-origin'] = origin
+                     response.headers['access-control-allow-methods'] = "GET"
+                     response.headers['cache-control'] = "no-store"
             return response
 
         raise PublicationError('%r can not be rendered.' % context)
 
-CORS_ALLOWED_ORIGINS = (
-    "https://wiki.pythonlinks.info",
-    "https://uncensorednews.us",
-    "https://greenmaps.us",
+CORS_ALLOWED_DOMAINS = (
+    "wiki.pythonlinks.info",
+    "uncensorednews.us",
+    "greenmaps.us",
 )
