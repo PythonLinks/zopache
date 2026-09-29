@@ -309,7 +309,7 @@ class Branch(SimpleBranch):
 
             case "Article":
                 self.addTootedArticle(item)
-                self.contentByTime[item.importTime] = item
+                self.contentByTime[int(item.importTime)] = item
                 self.catalogContent(item,ancestorNames)
                     
             case 'Link':
