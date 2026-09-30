@@ -2,7 +2,7 @@ from zope.interface import Interface
 from zope.schema.vocabulary import SimpleVocabulary
 from zope import schema
 import crom
-from zopache.pages.interfaces import ILinkBase
+from zopache.pages.interfaces import IPageBase
 from zopache.zmi.interfaces import IURLSegment
 from zopache.ttw.treewidget import TreeField
 
@@ -25,7 +25,7 @@ from zopache.remote.interfaces import IVoteable
 
  
 
-class IVideo(ILinkBase,IVoteable):
+class IVideo(IPageBase,IVoteable):
     title = schema.TextLine(
         title = u'Video Title',
         description = u'What is the title of this video.?',

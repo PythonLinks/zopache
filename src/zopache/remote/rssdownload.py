@@ -32,6 +32,7 @@ async def fetch(session,node,view):
    isFeed = className in ["RSS","JustRSS"]
    if className in ["RSS","JustRSS"]:
       url = node.rssURL
+      rss_logger.info("%s: starting fetch", node.title)
    elif className == 'Article':
       if not node.title:
          url = node.articleURL
@@ -53,6 +54,9 @@ async def fetch(session,node,view):
         url = url.strip()
         async with session.get(url) as response:
           status = response.status
+          if isFeed:
+             rss_logger.info("%s: got response, status %d",
+                              node.title, status)
           if status == 200:
              result = await node.processResponse(session,response,view)
              if isFeed:
@@ -97,7 +101,7 @@ async def fetchCore(nodes,view,allowedTime):
     user_agent = {'User-agent': 'Mozilla/5.0'}
     async with aiohttp.ClientSession(timeout = timeout,
                        headers = user_agent
-                     ) as session:    
+                     ) as session:
       for node in nodes:
          if view.className(node) not in {'RSS',
                                          'JustRSS',

@@ -56,7 +56,7 @@ class RSSBase(object):
         self.status='RSS Feeds were downloaded.'
         
 @implementer (IRSS)     
-class RSS(Link,UniqueName,RSSBase):
+class RSS(RSSBase, Link,UniqueName):
     webClass = "RSS"
     htmlSummary = True
     title = ""
@@ -65,6 +65,13 @@ class RSS(Link,UniqueName,RSSBase):
     rssApproved = True
     keepAllArticles = False
 
+    def preDeleteProcess(self,view):
+        localArticles = list (self.localArticles.values())
+        for article in localArticles:
+            article.preDeleteProcess(view)
+            parent = article.__parent__
+            del parent[article.__name__]
+    
     # FOR A NEW RSS FEED       
     def createOneArticle(self,article,view,currentTime):
        new = RSSArticle()

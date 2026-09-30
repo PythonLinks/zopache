@@ -87,6 +87,8 @@ class NewsMixIn(object):
         self.p_changed = True
 
     def removeAllToots(self):
+        if not hasattr(self,'toots'):
+            return
         if len(self.toots)==0:                    
            return
         for aToot in self.toots:

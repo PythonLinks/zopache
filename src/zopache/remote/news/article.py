@@ -50,9 +50,10 @@ class Article (Link, Tootable):
                 self.description)
         
     def preDeleteProcess(self,view):
-        for toot in self.toots:
-            toot.removeArticle(self)
-            self.toots = []
+        if hasattr(self,'toots'):
+            for toot in self.toots:
+                toot.removeArticle(self)
+                self.toots = []
     
     async def processResponse(self, session, response,view):
         try:

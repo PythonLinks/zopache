@@ -149,8 +149,8 @@ class RSSArticle(BaseArticle):
         #Page.preDeleteProcess(self,view)
         self.removeAllToots()
         localArticles = self.rssFeed.localArticles
-        if hasattr(self,'permalink'):
-            if self.permalink in localArticles:
+        if hasattr(self,'permaLink'):
+            if self.permaLink in localArticles:
                  del localArticles [self.permaLink]
             else:
                 raise Exception("That article was not listed in localArticles.")
