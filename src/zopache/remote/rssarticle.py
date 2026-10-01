@@ -43,7 +43,7 @@ class BaseArticle(NewsMixIn,Page,Tootable):
         return (self.tootTitlePlusDescription() +    
                   self.tootArticleURL() +
                   self.tootVia(view) +
-                  self.tootReadMore() )
+                  self.tootReadMore(view) )
                   
     def tagsAsString(self):
                return" ".join (self.tagsAsArray())

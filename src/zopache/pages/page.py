@@ -312,7 +312,7 @@ class Link(NewsMixIn,PageBase, PageMixIn):
         return (self.tootTitlePlusDescription() +    
                   self.tootArticleURL() +
                   self.tootVia(view) +
-                  self.tootReadMore() )
+                  self.tootReadMore(view) )
 
     def tootArticleURL(self):
             return self.remoteURL + "\n\n" 

@@ -139,6 +139,6 @@ class Article (Link, Tootable):
         return (self.tootTitlePlusDescription() +    
                   self.tootArticleURL() +
                   self.tootVia(view) +
-                  self.tootReadMore() )
+                  self.tootReadMore(view) )
                
 

@@ -26,9 +26,10 @@ class NewsMixIn(object):
             else:      
                 return  "via @UncensoredNews@Mastodon.Social \n\n"
 
-    def tootReadMore(self):                
-            result = ("Read more at:  https://UncensoredNews.US/" +
-               self.parent.name + 
+    def tootReadMore(self, view):
+            result = ("Read more at:  https://" +
+               view.getDomain() + "/" +
+               self.parent.name +
                "\n\n" +
                 self.tagsAsString() + ' ' +
                 self.parentalTags()                 
