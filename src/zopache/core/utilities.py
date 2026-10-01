@@ -153,27 +153,26 @@ class Utilities (object):
          else:
            return ""
   
-    def getDefaultImage(self, target  = None):
+    def getDefaultImage(self):
         context = self.context
-        if target != None:
-           context = target
-        socialMediaImage = context.get('SocialMediaImage',None)
-        if socialMediaImage != None:
-            return socialMediaImage
-          
-        banner = context.get('Banner',None)
-        if banner != None:
-            return banner
-        
-        logo = context.get('Logo',None)
-        if logo != None:
-            return logo
 
-        #image = self.parentalAcquire('SocialMediaImage', context = context)
-        #if image != None:
-        #   return image
-       
-        return  self.parentalAcquire('Logo', context = context)
+        if 'SocialMediaImage' in context:
+            return context['SocialMediaImage']
+
+        if 'Banner' in context:
+            return context['Banner']
+
+        if 'Logo' in context:
+            return context['Logo']
+
+        if hasattr(context,'rssFeed') and 'Logo' in context.rssFeed:
+            return context.rssFeed['Logo']
+
+        image = self.parentalAcquire('Logo', context = context)
+        if image:
+            return image
+
+        raise Exception("This toot needs an image!")
 
 
     def getSiteName(self):
