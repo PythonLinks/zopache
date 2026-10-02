@@ -146,7 +146,7 @@ class Publisher (DawnlightPublisher):
         raise PublicationError('%r can not be rendered.' % context)
 
 CORS_ALLOWED_DOMAINS = (
-    "wiki.pythonlinks.info",
+    "news.pythonlinks.info",
     "uncensorednews.us",
     "greenmaps.us",
 )
