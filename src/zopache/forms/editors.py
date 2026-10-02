@@ -9,6 +9,7 @@ from zope.schema.vocabulary import SimpleVocabulary
 from zope.interface import directlyProvides
 from zopache.core.getroot import getPrincipalFolderNoView
 from zopache.core.interfaces import ITreeSecurity
+from zopache.forms import tal_template
 
 def possibleEditors(context):
     people = getPrincipalFolderNoView(context).getEveryone()
@@ -44,10 +45,37 @@ class EditEditors(EditForm):
     interface = IEditors
     fields = Fields(IEditors)
     ignoreContent = False
-    #  mode = 'multiselect'
+    template = tal_template('editors.pt')    
   
     def update(self):
-      EditForm.update(self)  
-      self.template = self.getTemplates()['Security']
-           
-
+        EditForm.update(self)  
+        people = self.getPrincipalFolder().getEveryone()
+        self.people = sorted(people, key =  lambda x: x.title.lower())
+        parents = self.parents()[:-1]
+        inheritedEditors = set()
+        for ancestor in parents:
+           if hasattr(ancestor,'editors'):
+               for editor in ancestor.editors:
+                    inheritedEditors.add(editor)
+        self.inheritedEditors = inheritedEditors
+        
+    def checked(self,person):
+        context = self.context
+        if hasattr(context,'editors'):
+          if person.name in context.editors:
+              return  "checked"
+        return ""
+    
+    def showValue(self,person):
+       return 'value ="' + person.name +'"'
+    
+    def labelHtml(self, person):
+        text = person.title
+        if person.name in self.inheritedEditors:
+            text += ' (Inherited Editor)'
+        isEffectiveEditor = (self.checked(person) == "checked"
+                              or person.name in self.inheritedEditors)
+        if isEffectiveEditor:
+            return '<strong>' + text + '</strong>'
+        return text
+    

@@ -1,0 +1,27 @@
+
+
+
+
+
+    <form  id="form" method="post" enctype="multipart/form-data">
+
+    <div tal:repeat = "person view.people">
+
+    <input type="checkbox"
+           id="form-field-editors-${repeat.person.number}"
+           name="form.field.editors"
+           ${view.showValue(person)}
+           ${view.checked(person)}
+           class="field" />
+    <label for="form-field-editors-${repeat.person.number}" tal:content="structure view.labelHtml(person)">
+    </label>
+    <br />
+
+    </div>
+      <input type="hidden" name="form.field.editors.present" value="1" />
+
+    <input type="submit" id="form-action-save" name="form.action.save" value="Save" class="action btn" accesskey="#" />
+<input type="submit" id="form-action-saveandview" name="form.action.saveandview" value="Save And View" class="action btn" accesskey="#" />
+<input type="submit" id="form-action-cancel" name="form.action.cancel" value="Cancel" class="action btn" accesskey="#" />
+
+    </form>
