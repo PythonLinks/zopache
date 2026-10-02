@@ -1,0 +1,27 @@
+#AI Policy
+
+The AI policy is based on my experience with AI.
+
+AI is great at answering questions and reviewing work, but terrible at
+writing code.  AI is particularly bad at data structures.  Since this
+work is a graph of persistent Python objects, AI works particularly
+poorly here.  It is also terrible at reusing code, especially at
+making small modificatinos to existing subroutines.  It prefers to
+write everything from scratch, which would make code review an exhausiing
+task.  Unlike humans, it does not operate on concepts, so it is
+terrible at naming.
+
+AI does have its strengths.  It is particularly good at navigating
+large code bases and spotting the bug.  It is really brilliant at
+that.  Apart from the naming problem,  is okay at writing short linear code.  Create a log file, and log some values.
+
+When there is a technology I do not know, such as managing a ZFS file system, AI is significatnly better than me, but the key is for the commands to go through my brain, for me to do the typing, and then soon the AI gets laid off, saving natural resources. 
+
+To summarize, AI is a great teacher, a poor doer.  
+
+Accordingly I write the code, and AI reviews my work and teaches me.
+The typing goes through my fingers.  Occasionally I let it write a few
+lines of linear code.  Logging errors, or editing names in multiple
+files simultaneously.
+
+
