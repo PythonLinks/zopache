@@ -36,6 +36,7 @@ from zopache.core.relatives import parentsWhichImplement
 from zopache.core.relatives import Parents
 from zopache.pages.used import Used
 from zopache.remote.news.mixin import NewsMixIn
+from zopache.ttw.acquisition import ParentalAcquire
 
 class PageVeryBase(Used,AllObjects,OrderedBTreeContainer,UntrustedHTMLBase,Contained,ProcessTree):
     private = False
@@ -50,6 +51,22 @@ class PageVeryBase(Used,AllObjects,OrderedBTreeContainer,UntrustedHTMLBase,Conta
          self.creationTime=time.time()
          self.modificationTime=self.creationTime
 
+    def getAltText(self):
+        image = self.getDefaultImage()
+        if  not image:
+            return ""
+        if result := image._altText:
+            return result
+        return image.title
+
+    def setAltText(self,text):
+        image = self.getDefaultImage()
+        if  not image:
+            return
+        image._altText = text
+
+    altText = property(getAltText,setAltText)
+    
     def myDict(self,view):
                 
         myDict = {
@@ -253,6 +270,25 @@ class PageVeryBase(Used,AllObjects,OrderedBTreeContainer,UntrustedHTMLBase,Conta
                   children.append(item.asDict(classes = classes))
         return new
     
+    def getDefaultImage(self):
+        if 'SocialMediaImage' in self:
+            return self['SocialMediaImage']
+
+        if 'Banner' in self:
+            return self['Banner']
+
+        if 'Logo' in self:
+            return self['Logo']
+
+        if hasattr(self,'rssFeed') and 'Logo' in self.rssFeed:
+            return self.rssFeed['Logo']
+
+        image = ParentalAcquire(self) ['Logo']
+        if image:
+            return image
+
+        return None
+
     
     
 class PageBase(PageVeryBase,PageMixIn,Ancestors):

@@ -57,9 +57,10 @@ class File(Leaf,FileBase):
 import base64 
 class ImageBase(FileBase): 
     icon="ttwicons/Image.svg"
+    title = ""
     attributionText = ""
     attributionURL = ""
-        
+    _altText = ""    
     def getImageTag(self,webClass = "",
                     alt = "",
                     style = "",
@@ -118,7 +119,7 @@ class Image (Leaf,ImageBase):
         if self.__parent__.__class__ == BTreeImage:
            return self.__parent__.title
         else:
-           return self.__dict__["title"]
+           return self.__dict__.get("title","")
 
     def setTitle(self,value):
         if self.__parent__.__class__ == BTreeImage:
@@ -304,7 +305,7 @@ class DisplayImage(View,Breadcrumbs):
     def render(self):
         #result = "<center><h2>Please Reload the page to view the image.</h2>"
         #result += "</center>"
-        result = '<img src="' + self.absoluteURL(self.context)+ '"\>'
+        result = '<img src="' + self.absoluteURL(self.context)+ '">'
         return result
     
 def make_logo_response(view, result, *args, **kwargs):

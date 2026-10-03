@@ -155,25 +155,7 @@ class Utilities (object):
   
     def getDefaultImage(self):
         context = self.context
-
-        if 'SocialMediaImage' in context:
-            return context['SocialMediaImage']
-
-        if 'Banner' in context:
-            return context['Banner']
-
-        if 'Logo' in context:
-            return context['Logo']
-
-        if hasattr(context,'rssFeed') and 'Logo' in context.rssFeed:
-            return context.rssFeed['Logo']
-
-        image = self.parentalAcquire('Logo', context = context)
-        if image:
-            return image
-
-        raise Exception("This toot needs an image!")
-
+        return context.getDefaultImage()
 
     def getSiteName(self):
         siteRoot = self.getSiteRoot()

@@ -1,0 +1,117 @@
+
+<center>
+
+${structure: view.receiveMessage()}
+ 
+
+<h3>
+    
+<span tal:condition = "view.tootURL">
+    <a href = "${view.tootURL}">Original Toot</a>
+</span>
+
+<span tal:condition = "view.tempTootURL">
+    <a href = "${view.tempTootURL}">Your Toot</a>
+</span>
+
+</h3>
+ 
+<div tal:condition = "view.submissionError" class="alert alert-danger">
+ERROR: ${structure: view.submissionError}
+</div>
+
+<span tal:condition = "view.scheduledAt">    <a href ="${view.scheduledAt}" > Your Toot is scheduled</a></span>
+<span tal:condition = "hasattr(context,'scheduledAt')">    <a href ="${context.scheduledAt}" > Official Toot is scheduled</a></span>
+<h4 tal:switch = "view.context.lastTootTime == 0">
+    <span tal:case = "True">
+         This was never tooted.
+    </span>
+    <span tal:case = "False">
+    Last tooted ${ view.ago(view.context.lastTootTime)}
+    </span>
+
+</h4>
+</center>
+<div>
+<form tal:attributes="action view.action_url;
+                                 id view.htmlId();
+                                 method view.formMethod;
+                                 enctype view.enctype">
+   
+<div style = "text-align:left;clear:left;">
+  <p> If you have an account on Mastodon.Social, 
+  you can toot about this item. <p>  
+  
+      <label for="form-field-toot">Toot Something!</label>
+      
+<br>
+</div>      
+ <div style = "display:inline-block; padding: 4px" id = "textBox">
+  
+<textarea  
+  oninput="displayCharacters()"
+  onfocus = "possibleLogin()"
+rows = "10" 
+      cols = "60" id="form-field-toot" name="form.field.toot"
+      class="field form-control">
+    ${view.context.getToot(view=view)}
+</textarea>
+    </div>
+    <div>
+    <p>Remaining Characters: <span id = "length"></span></p>
+</div>
+
+<label for="form-field-altText">Alt Text</label>
+<br>
+  <textarea  
+      rows = "4" 
+      cols = "60" 
+      id="form-field-altText"
+      name="form.field.altText"
+      class="field form-control"
+      tal:content = "view.context.altText | ''"></textarea>    
+      
+      <div tal:define = "widget view.bootstrap_widgets()[1]"
+      style = "text-align:left">
+
+<input type="text" id="form-field-delay"  size = "10" name="form.field.delay" class="field form-control"
+value="${context.delay if hasattr(context,'delay') else '0.0'}">
+
+      &nbsp;  &nbsp;  Hours delay until posted. (0 or >=0.1)
+      
+       <p class="text-danger"
+         tal:define="error widget.error"
+         tal:condition="error"
+         tal:content="error.title" />          
+      </div>
+<br>
+ <tal:actions tal:condition="view.actionWidgets">
+    <tal:widget tal:content="structure widget.render()"
+                tal:repeat="widget view.bootstrapActionWidgets()" />
+  </tal:actions>
+  <br><br>
+  <img  src = "${view.secureImageURL()}"  style = "max-height: 50vh;"/>
+  <br>
+      <label for="form-field-spoilerText">Content Warning</label> 
+  <br>
+  <textarea  
+      rows = "2" 
+      cols = "60" 
+      id="form-field-spoilerText"
+      name="form.field.spoilerText"
+      class="field form-control"
+      tal:content = "view.context.spoilerText | ''"></textarea>
+<br>
+</form>
+</div>
+
+<script>
+    var canToot = ${'true' if view.canToot else 'false'};
+</script>
+
+   <script    src = "/assets/remote/mastodon/countcharacters.js"></script>   
+   <script     src = "/assets/remote/mastodon/gotoot.js"></script>
+
+
+  
+

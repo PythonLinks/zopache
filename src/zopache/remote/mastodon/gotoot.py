@@ -5,8 +5,6 @@ from datetime import datetime, timedelta
 from cromlech.security import unauthenticated_principal as anonymous
 from cromlech.browser.exceptions import HTTPFound
 from dolmen.forms.base import Action,Actions
-from dolmen.forms.base import Actions
-
 
 from zope.interface import Interface
 from zope.schema import Text, Float
@@ -16,15 +14,15 @@ from zopache.crud.forms import EditForm
 from zopache.pages.interfaces import IPageBase
 from zopache.remote.irss import IRSSArticle
 from zopache.crud.update import Cancel, Edit
-from zopache.crud.update import Edit
 from zopache.remote.mastodon.basebot import MastodonBot
-
+from zopache.remote.mastodon import tal_template
 
 class Toot(Edit):
+    htmlClass = "action btn btn-primary"
     def __call__(self, form):
         Edit.__call__(self,form)
         form.nowToot()
-        
+
 class TootAndView(Toot):
     def __call__(self, form):
         Edit.__call__(self,form)
@@ -33,25 +31,29 @@ class TootAndView(Toot):
              raise HTTPFound(url)
 
 class OnlyToot(Edit):
+    htmlClass = "action btn btn-primary"
     def __call__(self, form):
         form.nowToot()
-        
+
 class OnlyTootAndView(Toot):
     def __call__(self, form):
         url = form.nowToot()
         if url != '':
            raise HTTPFound(url)
-         
+
 class Reset(Action):
+    htmlClass = "action btn btn-secondary"
     def __call__(self, form):
         context = form.context
         context._toot = context.defaultToot(view = form)
 
 class OnlyReset(Action):
+    htmlClass = "action btn btn-secondary"
     def __call__(self, form):
         raise HTTPFound(".")
 
 class Delete(Action):
+    htmlClass = "action btn btn-secondary"
     def __call__(self, form):
         #Delete Image not supported.
         tootId = getattr(form.context,'tootId',None)
@@ -99,7 +101,14 @@ class IClass(Interface):
         description = 'If empty, not displayed',
         required = False,
         default = '',
-    )    
+    )
+
+    altText = Text(
+        title = 'Alt Text',
+        description = 'Please add alt text to the default image.',
+        required = False,
+        default = '',
+    )        
     
     delay= Float(
         title = 'Delay',
@@ -124,12 +133,16 @@ class TootForm (EditForm,MastodonBot):
     imageURL = ""
     scheduledAt = 0
     tempScheduledAt = 0
-
+    template = tal_template('gotoot.pt')    
     
     def update(self):
-        if self.request.principal == anonymous:
+        principal = self.request.principal
+        if principal == anonymous:
             self.oauth()
-            
+        if "github.com" in principal.email:
+            self.sendMessage("You cannot toot with a github account. "
+                             "Log into a Mastodon account")
+            self.oauth()            
         self.tootURL =  getattr(self.context,'tootURL','')
         self.tempTootURL =  getattr(self,'tootURL','')
         
@@ -139,15 +152,8 @@ class TootForm (EditForm,MastodonBot):
  
         if hasattr(self.context,'rssFeed'): 
            rssFeed = self.context.rssFeed
-           if hasattr(rssFeed,'twitterId'):
-              self.twitterId = twitterId = rssFeed.twitterId
-              self.link = ("https://twitter.com/" + twitterId) if twitterId else ''
-        self.canToot =  self.request.principal.accessToken
-        
-        self.template = self.getTemplates()['toot']
-        #if self._toot == "":
-        #   context = form.context
-        #   context._toot = context.defaultToot(view = form)            
+        accessToken = getattr(self.request.principal, 'accessToken','')
+        self.canToot =  bool(accessToken)
         self.updateLocalActions()
         EditForm.update(self)
     
@@ -238,24 +244,31 @@ class TootForm (EditForm,MastodonBot):
             self.addUnAuthorizedActions()
             
     def addAuthorizedActions(self):
-        actionList = [Edit("Save",'save'),
+        saveAction = Edit("Save",'save')
+        saveAction.htmlClass = "action btn btn-secondary"
+        cancelAction = Cancel("Cancel","Cancel")
+        cancelAction.htmlClass = "action btn btn-secondary"
+        actionList = [
                       Toot("Toot","toot"),
                       TootAndView("Toot And View","tootView"),
+                      saveAction,                      
                       Reset("Reset",'reset')
                       ]
         if hasattr(self.context,'tootURL'):
               actionList.append(Delete("Delete Toot","deleteToot"))
-        actionList.append(Cancel("Cancel","Cancel"))
-        actionList = tuple(actionList)                  
+        actionList.append(cancelAction)
+        actionList = tuple(actionList)
         self.actions = Actions(*actionList)
 
     def addUnAuthorizedActions(self):
+        cancelAction = Cancel("Cancel","Cancel")
+        cancelAction.htmlClass = "action btn btn-secondary"
         actionList = [OnlyToot("Toot","toot"),
                       OnlyTootAndView("Toot And View","tootView"),
-                      Cancel("Cancel","Cancel")                      
+                      cancelAction
                       ]
-        actionList = tuple(actionList)                  
-        self.actions = Actions(*actionList)        
+        actionList = tuple(actionList)
+        self.actions = Actions(*actionList)
 
         
     def acquireTitle(self):
@@ -265,10 +278,6 @@ class TootForm (EditForm,MastodonBot):
     def subTitle(self):
        return  self.context.title 
 
-    def postrocess(self):
-        pass
-    
-    
     def mediaIdAsList(self):
         #if self.className() == "EmbedVideo":
         #    return None
@@ -277,11 +286,11 @@ class TootForm (EditForm,MastodonBot):
         if mediaId != None:
            return [mediaId]
         data , mimeType, title = image.mastodonImage()
-        
+        description = self.request.form.get("form.field.altText","")
         try: 
            mediaDict =   self.getUserProxy().media_post(media_file = data,
                                           mime_type = mimeType,
-                                          description = title,
+                                          description = description,
                                           focus = None)
            image.mastodonURL = mediaDict['url']
            image.mastodonId = mediaDict['id']           
