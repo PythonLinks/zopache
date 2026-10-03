@@ -33,6 +33,7 @@ from cromlech.security import unauthenticated_principal as Anonymous
 from zopache.pages.interfaces import ILink
 from zopache.ttw.branch import Branch
 from zopache.core.relatives import parentsWhichImplement
+from zopache.remote.mastodon.tootable import Tootable
 from zopache.core.relatives import Parents
 from zopache.pages.used import Used
 from zopache.remote.news.mixin import NewsMixIn
@@ -334,7 +335,7 @@ class Page(PageBase, PageMixIn):
     icon="ttwicons/WikiPage.png"
     
 @implementer (ILink)     
-class Link(NewsMixIn,PageBase, PageMixIn):
+class Link(NewsMixIn,PageBase, PageMixIn, Tootable):
     webClass='Link'
     icon="ttwicons/WikiPage.png"
     tags = {}
