@@ -97,10 +97,9 @@ class Add(Action, UniqueName, TransactionNote):
     
     def actuallyAdd(self,item,data):
         newName = self.getName(data)
-        context = self.form.context   
+        context = self.form.context
         context[newName]=item
-        item.__parent__ = context
-        
+
     def newURL(self,baseURL):
         if hasattr(self.form, 'newURL'):
             return self.form.newURL(baseURL)
@@ -125,8 +124,6 @@ class AddByTitle (Add):
             newName = self.newName(data)        
         context = self.getContext(data)
         context[newName]=item
-        item.__parent__ = context
-        item.__name__ = newName
 
         if hasattr(self.new,'imageURL'):
             getImage (self.new,self.new.imageURL)

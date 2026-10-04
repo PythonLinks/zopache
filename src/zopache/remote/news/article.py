@@ -104,6 +104,8 @@ class Article (Link, Tootable):
 
         if description == None:
             description = ""
+        if title == None:
+            title = ""
         #This is a link to a Mastodon server, quit
         if (
            "To use the Mastodon web application, please enable JavaScript."

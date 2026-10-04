@@ -10,7 +10,6 @@ from zopache.pages.page import PageBase, Page
 from zopache.pages.interfaces  import (IPage,
                                        IPin,
                                        ILocationContainer,
-                                       IGeography,
                                        ILocationLeaf,
                                        ILocation,
                                        IMap,

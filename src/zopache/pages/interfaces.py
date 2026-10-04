@@ -217,21 +217,7 @@ class ISiteRootPage(ISiteRoot,IBranch,IPage,IBTreeContainer):
 class INotPage (Interface):
      pass
 
-class IGeography(Interface):    
-    pass
-
 class ILatLng(Interface):
-    #Misspelled attribute is left here to not break thigns.
-    # It is slowly being eliminated. 
-    lattitude = schema.Float(
-        title = u'Latitude',
-        description = u'Latitude',
-        min=-90.,
-        max=90.,
-        default = 51.509865,
-        required = True,
-        )
-
     latitude = schema.Float(
         title = u'Latitude',
         description = u'Latitude',
@@ -253,7 +239,7 @@ class ILatLng(Interface):
 #This is the legacy Location,
 #Used in pages.location.Location
 #So it has to stay
-class ILocation(IGeography,ILatLng):
+class ILocation(ILatLng):
     pass
 
 #For Politicians
@@ -264,10 +250,10 @@ class ILocationLeaf(ILocation):
 class ILocationContainer(ILocation):
     pass
 
-class IPin(ILocationLeaf,ILatLng,IGeography):
+class IPin(ILocationLeaf,ILatLng):
     pass
 
-class IMap(IGeography,ILatLng):
+class IMap(ILatLng):
     zoomLevel = schema.Float(
         title = u'Google Maps Zoom Level',
         description = u'Google Maps Zoom Level',
@@ -301,7 +287,7 @@ class ICategory(ICategoryBase,
                 IPageBase):
     pass
 
-class IGeographicalCategory(ICategory, IGeography):
+class IGeographicalCategory(ICategory):
     """
     title = schema.TextLine(
         title = 'Geographical Category Name',

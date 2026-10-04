@@ -98,7 +98,7 @@ class RSS(RSSBase, Link,UniqueName):
            
        theId = article['id']
        new.permaLink = theId
-       if hasattr(article,"published_parsed"):
+       if article.get("published_parsed"):
           new.publishedAt = min(
                             time.mktime( article["published_parsed"]),
                             currentTime)

@@ -5,9 +5,8 @@ from zopache.business.interfaces import IEvent,IOnlineEvent
 from zope.interface import implementer
 from zopache.business.geocoding import GeoCodeObject
 from zopache.pages.page import Page
-from zopache.business.subscribe import HasMembers
 
-class EventBase(Page,HasMembers):
+class EventBase(Page):
     count = 0
     webClass = "Event"
     clientClass = "Category"
@@ -15,7 +14,6 @@ class EventBase(Page,HasMembers):
     
     def __init__(self):
         Page.__init__(self)
-        HasMembers.__init__(self)
 
     #This method provides spelling error in the data.     
     def getMarkerLatLng (self):
@@ -49,4 +47,3 @@ class Event(GeoCodeObject,EventBase,LocationLeaf):
     def __init__(self):
         Page.__init__(self)
         GeoCodeObject.__init__(self)
-        HasMembers.__init__(self)

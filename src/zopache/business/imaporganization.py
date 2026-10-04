@@ -147,11 +147,10 @@ class IMapOrganizationBase (IPageBase):
 
 
 from zopache.business.interfaces import  ISocialMedia,IOrganizationBase
-from zopache.pages.interfaces import IGeography
     
 class IMapOrganization(IOrganizationBase,
             IMapBase,ILocationContainer,
-            IMapOrganizationBase,ISocialMedia,IGeography):    
+            IMapOrganizationBase,ISocialMedia):    
       pass
 
 class IEndorsingOrganization(IMapOrganization,IMap):
