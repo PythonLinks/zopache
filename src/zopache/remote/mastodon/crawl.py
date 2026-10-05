@@ -17,7 +17,7 @@ class CrawlMastodon(View):
         self.status='Account were crawled.'
         feeds = []
         for account in context.values():
-            if account.className == ("RemoteAccount"):
+            if IRemoteAccount.providedBy (account):
                 feeds.append(account)
         feeds.sort()
         

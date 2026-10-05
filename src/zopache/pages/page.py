@@ -12,6 +12,9 @@ class PageBase(ContentWithChildContent,Ancestors):
     description = ''
     source = ''
 
+    def postProcessCore(self,view=None):
+        self.partialPostProcess(view=view)
+        
     def sortedByTitle(self):
            unsortedList=[]
            for item in self.values():

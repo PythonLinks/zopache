@@ -136,7 +136,7 @@ class Content(Used,
         return True
         
     def postProcessCore(self,view=None):
-        self.partialPostProcess(view=view)
+        return
 
     def preProcess(self,view=None):
         siteRoot = view.getSiteRoot()

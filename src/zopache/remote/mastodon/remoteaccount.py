@@ -24,7 +24,7 @@ os.makedirs('/app/data/logs', exist_ok=True)
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logger.addHandler(
-    logging.FileHandler('/app/data/logs/crawl', mode = "a"))
+    logging.FileHandler('/app/data/logs/crawl.log', mode = "a"))
 
 fetch_logger = logging.getLogger('fetchMastodon')
 fetch_logger.setLevel(logging.DEBUG)
@@ -36,7 +36,6 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
     htmlSummary = True
     webApproved = True
     title = ""
-    twitterId = ''
     mastodonId = ''
     keepAllArticles = False
     wordsToAvoid = ""
@@ -45,7 +44,6 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
     domainName = ""
     maxId = None
     mostRecentTootId = None
-    lastLongImportTime = 0
     def childCategories(self):
         return []
 
@@ -96,21 +94,9 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
                     pageCount += 1
         return totalNewArticles, pageCount
 
-    def isLongImport(self, startTime):
-        longImportedTimeAgo = startTime - self.lastLongImportTime
-        daysLongImportedAgo = longImportedTimeAgo/secondsInaDay
-        longImport = daysLongImportedAgo > 6
-        logger.info ("Imported Ago " +
-                             str(int(daysLongImportedAgo)))
-        if longImport == True:
-            self.lastLongImportTime = startTime
-            logger.info("Crawling Long Imports " +  self.mastodonId)
-        return longImport
-
     def crawlingMostRecent(self,view,proxy,item):
         maxId = None
         startTime = view .startTime
-        longImport = self.isLongImport(startTime)
         logger.info("Crawling Recent Toots " +  self.mastodonId)
         pageOfToots = self.fetchToots(
                               view,proxy,item,
@@ -126,37 +112,31 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
            logger.info("No New Toots " + self.mastodonId)
            return 0, 0
 
+        #anchor: walk back to where the last successful crawl left
+        #off, or to the newest toot already stored if there's no
+        #recorded boundary (fresh HashTag, or just after reset20).
+        previousMostRecentTootId = self.mostRecentTootId
+        if previousMostRecentTootId is not None:
+            anchorId = int(previousMostRecentTootId)
+        else:
+            anchorId = self.largestStoredId()
+
         self.mostRecentTootId = mostRecentTootId
         self.lastImported = startTime
         self.modificationTime = startTime
 
         totalNewArticles, pageCount, oldestTootAge = self.crawlPages(
-                              view,proxy,item,pageOfToots,longImport)
+                              view,proxy,item,pageOfToots,anchorId)
         logger.info ("oldestToot Age " + str(int(oldestTootAge)))
         return totalNewArticles, pageCount
 
-    def crawlPages(self,view,proxy,item,pageOfToots,longImport):
+    def crawlPages(self,view,proxy,item,pageOfToots,anchorId):
         totalNewArticles = 0
         oldestTootAge = 0
         pageCount = 0
         maxId = None
-        existingToots = False
         while (pageOfToots and
                 (proxy.ratelimit_remaining > 3) ):
-
-              if (existingToots and
-                  not longImport and
-                  (oldestTootAge > 1)):
-                  logger.debug("Break: Only crawling for a day " +
-                                 self.mastodonId)
-                  break
-
-              if (existingToots and
-                  longImport and
-                  (oldestTootAge > 6)):
-                  logger.debug("Break: Crawled For 6 days  " +
-                                 self.mastodonId)
-                  break
 
               existingToots, newArticles = (
                       self.processPage(pageOfToots,view))
@@ -167,6 +147,12 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
               maxId = self.setMaxId(maxId,lastToot.id)
               oldestTootAge = self.tootAge(lastToot,view)
               print ("Age = ", oldestTootAge," days", end = "")
+
+              if anchorId is not None and int(lastToot.id) <= anchorId:
+                  logger.debug("Break: reached last known toot " +
+                                 self.mastodonId)
+                  break
+
               pageOfToots = self.fetchToots(
                               view, proxy, item, 'crawlPages', maxId)
 
@@ -187,7 +173,6 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
             raise
 
     def logFetchSuccess(self, apiName, method, itemId, maxId, kwargs, proxy):
-        return
         fetch_logger.debug(
             "%s OK method=%s account=%s userId=%s "
             "maxId=%s kwargs=%s ratelimit_remaining=%s",
@@ -342,7 +327,25 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
         for item in self.values():
                result.append (item)
         return result
-         
+
+    def largestStoredId(self):
+        ids = []
+        for name in self.keys():
+            try:
+                ids.append(int(name))
+            except ValueError:
+                continue
+        return max(ids, default=None)
+
+    def mostRecentStored(self, count):
+        byId = {}
+        for name, item in self.items():
+            try:
+                byId[int(name)] = item
+            except ValueError:
+                continue
+        return [byId[tootId] for tootId in sorted(byId)[-count:]]
+
     def reset(self):
          self.crawledToStart = False
          self.minId = None 
@@ -354,7 +357,7 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
 
 @implementer (IRemoteAccount)
 class RemoteAccount( Base):
-
+    
     @property
     def remoteURL(self):
         blank,user, server = self.parts()

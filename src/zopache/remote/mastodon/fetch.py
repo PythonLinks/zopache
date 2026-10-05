@@ -42,10 +42,7 @@ class Reset20(Form):
     def update(self):
         context = self.context
         context.mostRecentTootId = None
-        context.lastLongImportTime = time.time() - (3600 * 24 * 8)
-        all = context.valuesAsList()
-        all = all [-20:]
-        for item in all:
+        for item in context.mostRecentStored(20):
             del context [item.name]
         self.status='Account was reset.'
         #logging.info ("Reset account ", context.mastodonId)
@@ -64,7 +61,7 @@ class FetchTimeLine(Form,MastodonBot,RSSBase):
         title += self.context.mastodonId
         return  title
 
-
+    #Probably used by the ttw templates.
     def getAccountName(self,toot):
         accountName = toot.account.acct
         if not '@' in accountName:
@@ -119,7 +116,7 @@ class FetchTimeLine(Form,MastodonBot,RSSBase):
         logging.info ("Duration = " +  str(self.duration))
         errors = "<br>".join(self.submissionErrors)
         return (
-            "Account was crawled. Details in /app/data/logs/crawl <br>" +
+            "Account was crawled. Details in /app/data/logs/crawl.log <br>" +
             "Duration =  " + str(self.duration) +
             " minutes" +
             "<br> New Articles = " + str(self.totalNewArticles) +

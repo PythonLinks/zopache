@@ -25,34 +25,43 @@ if not rss_error_logger.handlers:
     handler.setFormatter(logging.Formatter('%(asctime)s %(message)s'))
     rss_error_logger.addHandler(handler)
 
+FEED_ACCEPT = 'application/rss+xml,application/xml,text/xml,*/*;q=0.8'
+HTML_ACCEPT = ('text/html,application/xhtml+xml,application/xml;q=0.9,'
+               'image/avif,image/webp,*/*;q=0.8')
+IMAGE_ACCEPT = 'image/avif,image/webp,image/apng,image/*,*/*;q=0.8'
+
 async def fetch(session,node,view):
-   startTime = time.time()    
+   startTime = time.time()
    duration =  0
    className = view.className(node)
    isFeed = className in ["RSS","JustRSS"]
    if className in ["RSS","JustRSS"]:
       url = node.rssURL
-      rss_logger.info("%s: starting fetch", node.title)
+      accept = FEED_ACCEPT
+      rss_logger.info("%s: starting RSS fetch", node.title)
    elif className == 'Article':
       if not node.title:
          url = node.articleURL
-      else:   
+         accept = HTML_ACCEPT
+      else:
          url = getattr(node,'imageURL',None)
+         accept = IMAGE_ACCEPT
          if url in ["",None]:
             return SUCCESS, (node.name + " No image URL.")
    elif className == "RSSArticle":
       url = getattr(node,'imageURL',None)
+      accept = IMAGE_ACCEPT
       if not url:
          return FAILURE, ("Existing Article " +
                           node.name +
-                          " No image URL.") 
+                          " No image URL.")
    else:
       return FAILURE, node.__name__, ("Error Trying to Fetch " +
       node.__class__.__name__)
    #NOW PROCESS THE URL
    try:
         url = url.strip()
-        async with session.get(url) as response:
+        async with session.get(url, headers={'Accept': accept}) as response:
           status = response.status
           if isFeed:
              rss_logger.info("%s: got response, status %d",
@@ -75,7 +84,7 @@ async def fetch(session,node,view):
                               ' status = ' +
                               statusStr +
                               url )
-                              
+
    except asyncio.TimeoutError as err:
           duration =  time.time() - startTime
           duration = int(duration)
@@ -83,7 +92,7 @@ async def fetch(session,node,view):
              rss_error_logger.info("%s: TIME OUT %ds %s",
                                     node.title, duration, url)
           return FAILURE, node, "TIME OUT: "  + str(duration) + 's ' + url
-          
+
    except Exception as e:
           if isFeed:
              rss_error_logger.info("%s: %s %s", node.title, str(e), url)
@@ -94,15 +103,14 @@ def fetchAll(nodes,view,allowedTime = 120):
     loop = asyncio.new_event_loop()
     #asyncio.set_event_loop(loop)
     return loop.run_until_complete(fetchCore(nodes,view,allowedTime))
-   
-async def fetchCore(nodes,view,allowedTime):   
+
+async def fetchCore(nodes,view,allowedTime):
     tasks = []
     timeout = aiohttp.ClientTimeout(total=allowedTime)
     headers = {
         'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
                         'AppleWebKit/537.36 (KHTML, like Gecko) '
                         'Chrome/120.0 Safari/537.36'),
-        'Accept': 'application/rss+xml,application/xml,text/xml,*/*;q=0.8',
         'Accept-Language': 'en-US,en;q=0.9',
     }
     async with aiohttp.ClientSession(timeout = timeout,
@@ -123,7 +131,7 @@ async def fetchCore(nodes,view,allowedTime):
                                           view))
          tasks.append(task)
       result = await asyncio.gather(*tasks)
-    return result  
+    return result
 
 
 
