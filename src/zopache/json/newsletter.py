@@ -8,7 +8,7 @@ from dolmen.forms.base.errors import Error, Errors
 from zopache.core.viewdecorators import *
 from zopache.core.interfaces import ITreeSecurity
 
-from zopache.pages.page import PageVeryBase
+from zopache.pages.content import ContentWithChildContent
 from zopache.pages.page import Link
 
 from zopache.business.addbyurl import ProcessURL
@@ -81,4 +81,4 @@ class INewsletterAdaptor(object):
     def __init__(self,context):
         self.context=context
     def getSegment(self):
-        return 'ckedit'        
+        return 'ckedit'

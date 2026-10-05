@@ -35,7 +35,6 @@ from zopache.zmi.interfaces import IObjectRenamer
 from zopache.zmi.interfaces import IObjectPaster
 from .cutfolder import cutFolder
 from zopache.core.getroot import getSiteRoot
-from zopache.pages.cache import cache
 
 class BaseClass(TransactionNote,UniqueName):
     def __init__(self, object):
@@ -71,7 +70,6 @@ class Renamer(BaseClass):
         self.moveFrom(container,oldName, container, newName)
         if hasattr(obj,'postMoveProcess'):
             obj.postMoveProcess(view)        
-        cache.resetCache(view.context)
         
     def allowed(self,obj):
         if  IRenameable.providedBy(obj):

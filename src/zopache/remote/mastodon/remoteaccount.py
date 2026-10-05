@@ -9,11 +9,14 @@ from dolmen.forms.base.markers import FAILURE
 from zopache.core.viewdecorators import *
 from zopache.remote.mastodon.toot import Toot
 from zopache.remote.mastodon.interfaces import IRemoteAccount, IHashTag
-from zopache.application.source import Source
+from dolmen.container import BTreeContainer
+from zopache.core.uniquename import UniqueName
+from zopache.core.ancestors import Ancestors
 from zopache.remote.rssdownload import fetchAll
 from zopache.crud.getimage import getImage
 from zopache.remote.news.article import Article
 from zopache.core.transactionnote import TransactionNote
+from zopache.pages.content import Content
 
 secondsInaDay = 3600 *24
 
@@ -28,7 +31,7 @@ fetch_logger.setLevel(logging.DEBUG)
 fetch_logger.addHandler(
     logging.FileHandler('/app/data/logs/fetchMastodon', mode = "a"))
 
-class Base (Source, TransactionNote) :
+class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
     webClass = "RemoteAccount"
     htmlSummary = True
     webApproved = True
@@ -47,8 +50,9 @@ class Base (Source, TransactionNote) :
         return []
 
     def __init__(self):
-         Source.__init__(self)
-         self.reset()
+        Content.__init__(self)
+        BTreeContainer.__init__(self)
+        self.reset()
 
     def previousImportTime(self,indexTime,view):
             while True:
@@ -406,4 +410,3 @@ class IRemoteAccountAdaptor(object):
 
     def getSegment(self):
         return 'manage'
-

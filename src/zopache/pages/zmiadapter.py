@@ -16,7 +16,6 @@ from zopache.zmi.interfaces import IObjectRenamer
 from zopache.zmi.interfaces import IObjectPaster
 from zopache.core.transactionnote import TransactionNote
 from zopache.core.getroot import getPublicationRoot
-from zopache.pages.cache import cache
 
 
             
@@ -38,7 +37,6 @@ class PageCutter(Cutter):
     #IF IT IS A CATEOGRY DELETE FROM VALUESByTOKEN
     def cut(self,view):
         super().cut(view)
-        cache.resetCache(view.context)
         
 @crom.adapter
 @crom.sources(IPageBase)
@@ -62,7 +60,6 @@ class PagePaster(Paster,UniquePageName):
             orig_name = item.__name__
             new_name=self.uniqueName(toContainer,orig_name,"Copy")
             self.moveFrom(fromFolder, orig_name, toContainer, new_name)
-        cache.resetCache(view.context)
 
             
 class ItemNotFoundError(Exception):
@@ -123,7 +120,6 @@ class PageDeleter(Deleter):
         # THIS SHOULD ALWAYS BE TRUE
         if IPageBase.providedBy (container):
            root.recalculateRootJSON()
-        cache.resetCache(view.context)
 
            
     def allowed(self,item):

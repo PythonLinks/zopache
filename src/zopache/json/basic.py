@@ -4,7 +4,7 @@ from zope.interface import implementer
 from dolmen.forms.base.errors import Error, Errors
 
 from zopache.core import Leaf
-from zopache.pages.page import PageVeryBase
+from zopache.pages.content import ContentWithChildContent
 from zopache.json.interfaces import IBasicJSON
 from zopache.json.jsonproperties import BasicProperties
 

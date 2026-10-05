@@ -12,7 +12,6 @@ from zopache.pages.interfaces import IPageBase, ILinkBase
 from zopache.forms.interfaces import IApprove
 from zopache.core.interfaces import ITreeSecurity
 from zopache.remote.rssarticle import IRSSArticle
-from zopache.pages.cache import cache
 from zopache.core.breadcrumbs import Breadcrumbs
 
 @form_component
@@ -53,5 +52,4 @@ class Reject (View,Breadcrumbs):
         siteRoot.unIndexItem(context)
         self.context.webApproved = False
         siteRoot.indexItem(context)
-        cache.resetCache(self)
 

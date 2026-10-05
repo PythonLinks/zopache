@@ -6,7 +6,6 @@ from dolmen.forms.base.markers import FAILURE
 from .interfaces import IObjectCutter, IObjectCopier, IObjectRenamer
 from .interfaces import IObjectPaster, IObjectDeleter
 from .interfaces import IObjectRetitler, IObjectRenamer
-from zopache.pages.cache import cache
 from zopache.crud.utilities import title_or_name
 from zopache.core.transactionnote import TransactionNote
 
@@ -55,7 +54,6 @@ class ReName(BaseAction):
             if newId != oldId:
                 renamer = IObjectRenamer(item)
                 renamer.renameItem(oldId, newId,form)
-        cache.resetCache(form.context)
         return SuccessMarker('Renamed', True)
     
 class ReTitle(BaseAction):                
@@ -85,7 +83,6 @@ class ReBoth(BaseAction):
                 renamer = IObjectRenamer(item)
                 renamer.renameItem(item.__name__, newId,form)       
         return SuccessMarker('Retitled', True)        
-        cache.resetCache(form.context)
         return SuccessMarker('Renamed', True)
     
 
@@ -118,7 +115,6 @@ class CutObjects(BaseAction):
                                " Cannot be Cut")
                 return
             cutter.cut(form)
-        cache.resetCache(form.context)    
         return SuccessMarker('Cut', True)
     
 class PasteObjects(BaseAction):            
@@ -146,6 +142,5 @@ class DeleteObjects(BaseAction):
             deleter = IObjectDeleter(item)
             deleter.deleteItem(form)
             
-        cache.resetCache(form.context)
         return SuccessMarker('Deleted', True)
             

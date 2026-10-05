@@ -4,7 +4,7 @@ from zope.interface import implementer
 from dolmen.forms.base.errors import Error, Errors
 
 from zopache.core import Leaf
-from zopache.pages.page import PageVeryBase
+from zopache.pages.content import ContentWithChildContent
 from zopache.json.interfaces import IMultilingual,IMultilingualLeaf
 from zopache.core.ancestors import Ancestors
 
@@ -81,7 +81,7 @@ class MultilingualLeaf(Base,Leaf):
         pass
 
 @implementer(IMultilingual)
-class Multilingual(Base,PageVeryBase,Ancestors):
+class Multilingual(Base,ContentWithChildContent,Ancestors):
     webClass = "Multilingual"    
     
     @property
@@ -107,4 +107,4 @@ class IMulilingualLeafAdaptor(object):
     def __init__(self,context):
         self.context=context
     def getSegment(self):
-        return 'ckedit'        
+        return 'ckedit'

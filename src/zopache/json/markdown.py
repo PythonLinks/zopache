@@ -5,7 +5,7 @@ from zope.interface import implementer
 from dolmen.forms.base.errors import Error, Errors
 
 from zopache.core import Leaf
-from zopache.pages.page import PageVeryBase
+from zopache.pages.content import ContentWithChildContent
 from zopache.json.interfaces import IMarkdown
 from zopache.core.ancestors import Ancestors
 from zopache.json.jsonproperties import BasicProperties
@@ -14,7 +14,7 @@ from zopache.crud.getimage import getImage
 
 #This should have been IJSONMarkdown. Oh well. 
 @implementer(IMarkdown)
-class JSONMarkdown(BasicProperties, Tootable, PageVeryBase, Ancestors):
+class JSONMarkdown(BasicProperties, Tootable, ContentWithChildContent, Ancestors):
     _html      = ""
     webClass   = "JSONMarkdown"
     schemaName = "JSONMarkdownSchema"
@@ -86,7 +86,7 @@ class JSONMarkdown(BasicProperties, Tootable, PageVeryBase, Ancestors):
     
     def postProcess(self, view = None):        
         self._html = mistune.markdown(self.source)
-        PageVeryBase.postProcess(self, view = view)
+        ContentWithChildContent.postProcess(self, view = view)
         
     def postAddProcess(self, view = None):                
         self.postProcess(view = view)

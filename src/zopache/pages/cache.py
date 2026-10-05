@@ -4,7 +4,6 @@ from cromlech.browser.exceptions import HTTPFound
 from zopache.pages.interfaces import IRecent, IPage
 import heapq
 import math
-import arrow
 import time
 from zopache.core.getroot import getPublicationRoot
 
@@ -240,18 +239,6 @@ class MixIn(object):
        
     mostRecent = property (getMostRecent)
        
-    def age(self):
-       return arrow.get(self.creationTime).humanize()[:-3]
-   
-    def editDateForRSS(self):
-        return time.strftime("%a, %d %b %Y %H:%M:%S %z",
-                time.localtime(self.modificationTime))
-
-    def humanCreationDate(self):
-        if (self.publishedAt == 0):
-            return '-'
-        return time.strftime("%Y-%m-%d",time.localtime(self.publishedAt))
-
         
 class RecentMixIn(MixIn):
    pass

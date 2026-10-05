@@ -1,15 +1,14 @@
-from BTrees.OOBTree import OOBTree
-
 from zopache.core.viewdecorators import *
 from zopache.remote.news.interfaces import IMastodonArticles
 from zopache.crud.getimage import getImage
 from zopache.core.ancestors import Ancestors
-from zopache.application.source import Source
+from zopache.core.uniquename import UniqueName
+from zopache.pages.content import ContentWithChildContent
 
 #all imports are used
 
 @implementer (IMastodonArticles)
-class MastodonArticles(Source):
+class MastodonArticles(ContentWithChildContent, UniqueName, Ancestors):
     #webClass = "MastodonArticles"
     webClass = "RSS"
     webApproved = True
@@ -30,4 +29,3 @@ class IMastodnoArticlesAdaptor(object):
 
     def getSegment(self):
         return 'manage'
-
