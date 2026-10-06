@@ -1,18 +1,17 @@
 import logging
-import re
 import time
 
 from mastodon import MastodonError
 
+from zopache.core.view import View
 from zopache.core.viewdecorators import *
+from zopache.core.baseform import Form
 from zopache.remote.mastodon.basebot import MastodonBot
 from zopache.remote.mastodon.interfaces import IRemoteAccount
 from zopache.remote.rss import RSSBase
 from zopache.remote.news.mastodonarticles import MastodonArticles
 from zopache.remote.mastodon.remoteaccount import RemoteAccount
-from zopache.core.baseform import Form
-
-regexp = re.compile(r'https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+')
+from dolmen.container import IBTreeContainer
 
 @view_component
 @context(IRemoteAccount)
@@ -27,8 +26,6 @@ class Reset(Form):
         context = self.context
         context.reset()
         self.status='Account was reset.'
-        #logging.info ("Reset account ", context.mastodonId)
-
 
 @view_component
 @context(IRemoteAccount)
@@ -41,27 +38,31 @@ class Reset20(Form):
     
     def update(self):
         context = self.context
-        context.mostRecentTootId = None
+        context.reset()
         for item in context.mostRecentStored(20):
             del context [item.name]
         self.status='Account was reset.'
         #logging.info ("Reset account ", context.mastodonId)
 
-@view_component
-@context(IRemoteAccount)
-@target(IView)
-@name("fetch")
-@permissions('Manage')
-class FetchTimeLine(Form,MastodonBot,RSSBase):
 
-    #First the title
-    @property
-    def title(self):
-        title = "Download the toots for "
-        title += self.context.mastodonId
-        return  title
+class Base(MastodonBot,View):
+    def update(self):
+        View.update(self)
+        self.message = ""
+        self.submissionErrors = []
+        self.startTime = time.time()
+        self.root = self.getSiteRoot()
+        self.siteRoot = self.root
+        self.proxy =  self.getUserProxy()
+        self.contentByTime = self.getSiteRoot().contentByTime
+        self.mastodonArticles = self.root.get('mastodon-articles',None)
+        if self.mastodonArticles == None:
+            logging.debug('Creating Category "mastodond-articles".')
+            logging.debug('You may want to move it.')
+            self.mastodonArticles = MastodonArticles()
+            self.root['mastodon-articles'] = self.mastodonArticles
 
-    #Probably used by the ttw templates.
+        
     def getAccountName(self,toot):
         accountName = toot.account.acct
         if not '@' in accountName:
@@ -81,22 +82,9 @@ class FetchTimeLine(Form,MastodonBot,RSSBase):
            account.mastodonId = accountName
            feeds [accountName] = account
         return account    
-        
-    def update(self):
-        self.startTime = time.time()
-        self.root = self.getSiteRoot()
-        #self.siteRoot is Needed elsewhere. 
-        self.siteRoot = self.root
-        self.proxy =  self.getUserProxy()
-        account = self.context
-        self.contentByTime = self.getSiteRoot().contentByTime
-        self.mastodonArticles = self.root.get('mastodon-articles',None)
-        if self.mastodonArticles == None:
-            logging.debug('Creating Category "mastodond-articles".')
-            logging.debug('You may want to move it.')
-            self.mastodonArticles = MastodonArticles()
-            self.root['mastodon-articles'] = self.mastodonArticles
 
+
+    def crawlAccount(self,account):
         try:
             totalNewArticles, pageCount = account.crawl(self)
         except MastodonError as error:
@@ -109,49 +97,68 @@ class FetchTimeLine(Form,MastodonBot,RSSBase):
         if totalNewArticles:
             self.getSiteRoot().lastMastodonFetchTime = time.time()        
         self.pageCount = pageCount
-        Form.update(self)
-        
+        self.message  += (f"{account.mastodonId} crawled,"
+                           f" {pageCount}  pages, "
+                           f"{totalNewArticles} articles"
+                           + "".join("<br>" + e for e in self.submissionErrors)
+                           + "<hr>")
+
     def render(self):
         self.duration = (self.startTime - time.time())/60
         logging.info ("Duration = " +  str(self.duration))
-        errors = "<br>".join(self.submissionErrors)
         return (
-            "Account was crawled. Details in /app/data/logs/crawl.log <br>" +
+            "Crawl details in /app/data/logs/crawl.log <br>" +
             "Duration =  " + str(self.duration) +
-            " minutes" +
-            "<br> New Articles = " + str(self.totalNewArticles) +
-                "<Br> Page Count " + str(self.pageCount) +
-    "<Br> Total Toots " + str(len(self.context)) +
-    "<Br> Errors: <br>" + errors )
+            " minutes" + self.message )
+
+        
+    
+@view_component
+@context(IRemoteAccount)
+@target(IView)
+@name("fetch")
+@permissions('Manage')
+class FetchOne(Base):
+
+    #First the title
+    @property
+    def title(self):
+        title = "Download the toots for "
+        title += self.context.mastodonId
+        return  title
+        
+    def update(self):
+        Base.update(self)
+        account = self.context
+        self.crawlAccount(account)
+
+    def render(self):
+        return (Base.render(self) +
+                "<Br> Total Toots " + str(len(self.context)))
+        
+                           
+
+@view_component
+@context(IBTreeContainer)
+@target(IView)
+@name("crawl")
+@permissions('Manage')
+class CrawlMany(Base):                    
+    title = "Crawl Multiple Mastodon Acconts"
+    subtitle = "So easy. "
+    
+    def update(self):
+        Base.update(self)
+        context = self.context
+        self.status='Account were crawled.'
+        feeds = []
+        for account in context.values():
+            if IRemoteAccount.providedBy (account):
+                feeds.append(account)
+        feeds.sort(key=lambda feed: feed.lastImported)
+        for account in feeds:
+               self.crawlAccount(account)
+               self.submissionErrors = []
                
-
-    """
-    def debug(self,pageOfToots):
-        from bs4 import BeautifulSoup
-        for item in pageOfToots:
-       yes
-    if not item.reblog:
-                soup = BeautifulSoup(item.content, 'html.parser')
-                print()
-                print( item.created_at.ctime())
-                print (soup.get_text())
-
-                
-    """
-    """
-    def fixTime(self,toot):
-            root = self.siteRoot
-            account = self.context
-            contentByTime = self.contentByTime        
-            if tootedArticle := account.localArticles.get(toot.id,None):
-               publicationTime = None 
-               try:
-                   publicationTime = self.getPublicationTime(toot)
-               except:
-                   pass
-               if publicationTime:
-                  root.unIndexItem(tootedArticle)
-                  importTime = self.previousImportTime(publicationTime)
-                  tootedArticle.importTime = importTime
-                  root.indexItem(tootedArticle) 
-    """
+    def render(self):
+        return Base.render(self) 

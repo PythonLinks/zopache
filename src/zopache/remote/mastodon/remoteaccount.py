@@ -33,6 +33,7 @@ fetch_logger.addHandler(
 
 class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
     webClass = "RemoteAccount"
+    lastImported = 0
     htmlSummary = True
     webApproved = True
     title = ""
@@ -96,7 +97,7 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
 
     def crawlingMostRecent(self,view,proxy,item):
         maxId = None
-        startTime = view .startTime
+        startTime = int(view .startTime)
         logger.info("Crawling Recent Toots " +  self.mastodonId)
         pageOfToots = self.fetchToots(
                               view,proxy,item,
@@ -347,10 +348,10 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
         return [byId[tootId] for tootId in sorted(byId)[-count:]]
 
     def reset(self):
-         self.crawledToStart = False
-         self.minId = None 
+         #self.crawledToStart = False
          self.maxId = None
-        
+         self.mostRecentTootId = None
+         
     def postAddProcess(self,view = None):
         if self.logoURL:
             getImage(self,self.logoURL)
