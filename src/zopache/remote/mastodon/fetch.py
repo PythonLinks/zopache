@@ -25,6 +25,7 @@ class Reset(Form):
     def update(self):
         context = self.context
         context.reset()
+        self.crawldeToStart = False        
         self.status='Account was reset.'
 
 @view_component

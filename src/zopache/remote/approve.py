@@ -90,7 +90,7 @@ class PublishAndToot(Publish):
         if result != FAILURE:
             self.publish()
             raise HTTPFound('/' + form.context.name + '/toot')
-        return resul
+        return result
     
 class Retract(Save):
     def __call__(self,form):
