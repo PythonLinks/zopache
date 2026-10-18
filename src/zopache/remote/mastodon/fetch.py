@@ -105,7 +105,7 @@ class Base(MastodonBot,View):
                            + "<hr>")
 
     def render(self):
-        self.duration = (self.startTime - time.time())/60
+        self.duration = (time.time() - self.startTime)/60
         logging.info ("Duration = " +  str(self.duration))
         return (
             "Crawl details in /app/data/logs/crawl.log <br>" +

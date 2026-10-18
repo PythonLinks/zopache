@@ -20,17 +20,7 @@ ${structure: view.receiveMessage()}
 ERROR: ${structure: view.submissionError}
 </div>
 
-<span tal:condition = "view.scheduledAt">    <a href ="${view.scheduledAt}" > Your Toot is scheduled</a></span>
-<span tal:condition = "hasattr(context,'scheduledAt')">    <a href ="${context.scheduledAt}" > Official Toot is scheduled</a></span>
-<h4 tal:switch = "view.context.lastTootTime == 0">
-    <span tal:case = "True">
-         This was never tooted.
-    </span>
-    <span tal:case = "False">
-    Last tooted ${ view.ago(view.context.lastTootTime)}
-    </span>
-
-</h4>
+<h4>${view.context.lastTooted(view)}</h4>
 </center>
 <div>
 <form tal:attributes="action view.action_url;
@@ -74,10 +64,10 @@ rows = "10"
       <div tal:define = "widget view.bootstrap_widgets()[1]"
       style = "text-align:left">
 
+      <br>Hours delay until posted. (0 or >=0.1)
 <input type="text" id="form-field-delay"  size = "10" name="form.field.delay" class="field form-control"
 value="${context.delay if hasattr(context,'delay') else '0.0'}">
 
-      &nbsp;  &nbsp;  Hours delay until posted. (0 or >=0.1)
       
        <p class="text-danger"
          tal:define="error widget.error"

@@ -131,9 +131,7 @@ class TootForm (EditForm,MastodonBot):
     twitterId = ''
     link = ''
     imageURL = ""
-    scheduledAt = 0
-    tempScheduledAt = 0
-    template = tal_template('gotoot.pt')    
+    template = tal_template('gotoot.pt')
     
     def update(self):
         principal = self.request.principal
@@ -196,27 +194,26 @@ class TootForm (EditForm,MastodonBot):
             tootTime = time()
             #Only need to do this if
             #There is a future message
-            if delay >0:
-                tootTime += (delay * 3600)
-                at= tootDict["scheduled_at"]
-                if at:
-                   self.sendMessage("Your Toot will show up at: " +
-                                 str(at), type = "Error")
-                self.sendMessage("local Server Time: " +
-                                 str(datetime.now()), type = "Error")
-                            
-            if tootDict.get('url',False):
-                target.tootURL = tootDict.url
+            if delay > 0:
+                # Scheduled toot: lastTootTime holds the FUTURE post time;
+                # lastTooted() compares it to now to tell scheduled from
+                # already-posted, so no sign trick is needed.  status_post
+                # returns a ScheduledStatus with no url / real toot id, so
+                # there is nothing else to record here.
+                # KNOWN LIMITATION: scheduled toots fire server-side at
+                # Mastodon; this app never sees that moment, so a scheduled
+                # toot is never given a tootURL/tootId and is never embedded.
+                tootTime += delay * 3600
+            else:
+                if tootDict.get('url', False):
+                    target.tootURL = tootDict.url
 
-            if self.treeSecurity():
-               self.context.getEmbed(self, target.tootURL)
-               
-            if tootDict.get('id',False):
-                target.tootId = tootDict['id']
+                    if self.treeSecurity():
+                        self.context.getEmbed(self, target.tootURL)
 
-            if tootDict.get('schedule_at',False):
-                target.scheduledAt = tootDict['scheduledAt']
-                
+                if tootDict.get('id', False):
+                    target.tootId = tootDict['id']
+
             target.lastTootTime = tootTime
                 
             #Otherwise the delete action does not show up. 
@@ -282,19 +279,15 @@ class TootForm (EditForm,MastodonBot):
         #if self.className() == "EmbedVideo":
         #    return None
         image = self.getDefaultImage()
-        mediaId = getattr(image,'mediaId',None)
-        if mediaId != None:
-           return [mediaId]
         data , mimeType, title = image.mastodonImage()
         description = self.request.form.get("form.field.altText","")
-        try: 
+        try:
            mediaDict =   self.getUserProxy().media_post(media_file = data,
                                           mime_type = mimeType,
                                           description = description,
                                           focus = None)
            image.mastodonURL = mediaDict['url']
-           image.mastodonId = mediaDict['id']           
-           return [image.mastodonId]
+           return [mediaDict['id']]
         except Exception as error:
             self.report (error)
             return [] 

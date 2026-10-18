@@ -1,4 +1,5 @@
 import requests
+from time import time
 
 
 class Tootable(object):
@@ -21,13 +22,14 @@ class Tootable(object):
     
     
     def lastTooted(self, view = None):
-        if self.lastTootTime == 0:
-           lastTooted = "My first toot of this video. "
-        elif view == None:
-           lastTooted = "ERROR CANNOT DISPLAY LAST TOOT TIME "           
-        else:
-            lastTooted = "Last Tooted " + view.ago(self.lastTootTime)
-        return lastTooted
+        t = self.lastTootTime
+        if t == 0:
+           return "This was never tooted."
+        if view == None:
+           return "ERROR CANNOT DISPLAY LAST TOOT TIME "
+        if t > time():
+           return "Scheduled to toot " + view.ago(t) + "."
+        return "Last tooted " + view.ago(t) + "."
 
     def timeFreeToot(self):
          content = self._toot
@@ -71,18 +73,24 @@ class Tootable(object):
     
     def getEmbed(self,view,tootURL):
 
+        if view.className() != "JSONMarkdown":
+           return
+
         if tootURL:
            host = tootURL [8:].split('/')[0]
            embedURL = "https://"+ host + "/api/oembed?url=" + tootURL
-           result = requests.get(embedURL)
+           try:
+              result = requests.get(embedURL)
+           except requests.RequestException as error:
+              view.submissionError += "Failed to fetch the embed code."
+              return
            if result.status_code == 200:
               html = result.json()["html"]
-              if(view.className()=="JSONMarkdown"):
-                 json = self.json
-                 if not (toots := json.get('toots')):
-                    toots = list()
-                    json['toots'] = toots                    
-                 toots.append({'name' : "@" + view.request.principal.email,
-                               'embed': html})
+              json = self.json
+              if not (toots := json.get('toots')):
+                 toots = list()
+                 json['toots'] = toots
+              toots.append({'name' : "@" + view.request.principal.email,
+                            'embed': html})
         else:
           view.submissionError += "Failed to fetch the embed code."

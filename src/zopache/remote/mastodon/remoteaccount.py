@@ -45,6 +45,7 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
     domainName = ""
     maxId = None
     mostRecentTootId = None
+    crawledToStart = False
     def childCategories(self):
         return []
 

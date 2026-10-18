@@ -255,6 +255,12 @@ class Content(Used,
 
         if hasattr(self,'rssFeed') and 'Logo' in self.rssFeed:
             return self.rssFeed['Logo']
+        
+        if (hasattr(self,'toots')
+            and (len (self.toots) > 0)
+            and self.toots[0].__parent__
+            and 'Logo' in self.toots[0].__parent__):
+                return self.toots[0].__parent__['Logo']
 
         image = ParentalAcquire(self) ['Logo']
         if image:
