@@ -57,16 +57,26 @@ class Publish(Save):
         return result
     
     def publish(self):
-        context = self.form.context
-        context.webApproved = True
         form = self.form
+        context = form.context
+        context.webApproved = True
         if getattr(context,'category',''):
             context.publicationApproved = True
-            
             context.addImage()
             category = form.getSiteRoot()[context.category]
             if category!= context.__parent__:
                 context.moveTo(category)
+        self.rePublish()
+            
+    def rePublish(self):
+        form = self.form
+        context = form.context
+        importTime = int(time.time())        
+        root = form.getSiteRoot()
+        if not root.hasAnythingAt(importTime):
+            root.unIndexItem(context)
+            context.importTime = importTime
+        root.indexItem(context)
 
 class AddCategory(Save):
     def __call__(self,form):
