@@ -20,6 +20,7 @@ from zopache.remote.mastodon.interfaces import IToot
 from zopache.core import Leaf
 
 hostNamesToIgnore = {"uncensorednews.us",
+                     "oshn.eu",
                      "takvera.blogspot.com",
                      "twitter.com",
                      "www.twitter.com",
