@@ -1,5 +1,5 @@
 import re
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 from slugify import slugify
 from inspect import currentframe, getframeinfo
 from bs4 import BeautifulSoup
@@ -87,9 +87,7 @@ class Article (Link, Tootable):
             createImageInFrom(self,content, contentType, 'Logo')
             print ("*",end = "")
             return SUCCESS, self
-        except:
-          frameinfo = getframeinfo(currentframe())
-          e = sys.exc_info()[0]          
+        except Exception as e:
           return (FAILURE,
                   ("Error processing Image response in Article " +
                    str(e)),
@@ -134,30 +132,31 @@ class Article (Link, Tootable):
         # The following line could be earlier, but easier to read this way   
         if view.siteRoot.existsRemoteURL(self.articleURL) != False:
            return FAILURE, "URL Already Exists"
+
+        #This is a link to a Mastodon server, quit
+        if (
+           "To use the Mastodon web application, please enable JavaScript."
+           in html):
+             return  FAILURE, f"This is a mastodon server {self.articleURL}"
         
         try:
             title, description, image  = web_preview(self.articleURL, content = html )
-        except:
-            return  FAILURE, f"Web Preview failed to parse  {self.articleURL}"
+        except Exception as e:
+            return  FAILURE, f"Web Preview failed to parse  {self.articleURL} {e}"
 
         
         if description == None:
             description = ""
         if title == None:
             title = ""
-        #This is a link to a Mastodon server, quit
-        if (
-           "To use the Mastodon web application, please enable JavaScript."
-           in html):
-             return  FAILURE, "This is a mastodon server"
         if not title.strip():
             return FAILURE, "NO TITLE GIVEN", self
         self.title = title
         if image:
-            self.imageURL = image
+            self.imageURL = urljoin(self.articleURL, image)
        
         if len(description) > 100:
-           decription = description[100:]
+           description = description[:100]
            description = description.rsplit(' ', 1)[0]
            description = description + "..."
            

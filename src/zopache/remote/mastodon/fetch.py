@@ -1,5 +1,6 @@
 import logging
 import time
+from html import escape as escapeHTML
 
 from mastodon import MastodonError
 
@@ -98,10 +99,10 @@ class Base(MastodonBot,View):
         if totalNewArticles:
             self.getSiteRoot().lastMastodonFetchTime = time.time()        
         self.pageCount = pageCount
-        self.message  += (f"{account.mastodonId} crawled,"
+        self.message  += (f"{escapeHTML(account.mastodonId)} crawled,"
                            f" {pageCount}  pages, "
                            f"{totalNewArticles} articles"
-                           + "".join("<br>" + e for e in self.submissionErrors)
+                           + "".join("<br>" + escapeHTML(e) for e in self.submissionErrors)
                            + "<hr>")
 
     def render(self):

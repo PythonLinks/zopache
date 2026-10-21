@@ -80,6 +80,10 @@ async def fetch(session,node,view):
              if isFeed:
                 rss_error_logger.info("%s: status %s%s",
                                        node.title, statusStr, url)
+             # DO NOT EDIT the ' status = ' string below.
+             # remote/mastodon/remoteaccount.py:272, Base.fetchArticles(),
+             # tests for this exact text to avoid re-logging failures
+             # already logged above.
              return FAILURE,( node,
                               ' status = ' +
                               statusStr +

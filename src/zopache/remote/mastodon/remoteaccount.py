@@ -267,7 +267,9 @@ class Base (Content, BTreeContainer, UniqueName, Ancestors, TransactionNote) :
         for item in result:
             if item[0] ==  FAILURE:  
                view.submissionErrors.append("ERROR: " + str(item[1:]))
-               if not 'status' in str(item[1:] ):
+               # ' status = ' must match the text returned by fetch() in
+               # remote/rssdownload.py:88, which already logged the failure.
+               if not ' status = ' in str(item[1:]):
                   if not "TIME OUT" in str(item): 
                      try:
                          logger.warning ("\n" +  str(item))

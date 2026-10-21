@@ -33,7 +33,7 @@ class RSSBase(object):
            else:
               for i in range(maxLength,length):
                   if text[i]==' ':
-                     result = text [0:i-1] +  '...'
+                     result = text [0:i] +  '...'
                      return result
         except:
            return ""
@@ -72,13 +72,13 @@ class RSS(RSSBase, Link,UniqueName):
             parent = article.__parent__
             del parent[article.__name__]
     
-    # FOR A NEW RSS FEED       
+    # FOR A NEW RSS FEED
     def createOneArticle(self,article,view,currentTime):
        new = RSSArticle()
        new.articleURL = article.link
        if hasattr(article, 'tags'):
            new.tags = article.tags
-       unescaped = unescape (article.title)
+       unescaped = unescape (article.get('title') or '')
        result  = self.parseHTML(unescaped)
        new.title = result
 
@@ -96,7 +96,8 @@ class RSS(RSSBase, Link,UniqueName):
        if 'links' in article:
            new.links = article.links
            
-       theId = article['id']
+       #Some feeds omit <guid>/<id>; fall back to the link.
+       theId = article.get('id') or article.link
        new.permaLink = theId
        if article.get("published_parsed"):
           new.publishedAt = min(
@@ -157,7 +158,9 @@ class RSS(RSSBase, Link,UniqueName):
        globalArticles= root.globalArticles
        articles = []
        for article in entries[:20]:
-           theId = article['id']
+           if not article.get('link'):
+               continue
+           theId = article.get('id') or article.link
            if theId in globalArticles:
                continue
            if root.existsRemoteURL(article.link):

@@ -1,5 +1,8 @@
 from zope.interface import Interface
 from zope import schema
+
+from z3c.schema.email import RFC822MailAddress as Email
+
 from zopache.pages.interfaces import  ILinkBase
 from zopache.crud.interfaces import ILeaf, IDeletable
 
@@ -19,10 +22,10 @@ class IRemoteAccount(ILinkBase):
         default = '',
     )    
 
-    mastodonId=schema.TextLine(
+    mastodonId=Email(
         title = "Mastodon Id",
-        description ="""@User@Domain or #hashtag """,
-        required = False,
+        description ="User@Domain.com ",
+        required = True,
         )    
 
     defaultCategory = schema.TextLine(
